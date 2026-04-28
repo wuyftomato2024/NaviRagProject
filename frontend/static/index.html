@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>RAGLearn</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <h1>RAGLearn</h1>
+      <p>基于文档的简单问答工具。</p>
+    </header>
+
+    <main class="layout">
+      <aside class="panel sidebar">
+        <form id="chat-form">
+          <section class="section">
+            <h2 class="section-title">会话设置</h2>
+
+            <div class="field">
+              <label for="session-id">Session ID</label>
+              <input id="session-id" name="session_id" type="number" value="1" min="1" required>
+              <div class="hint">用于区分不同会话，对应后端的 `session_id`。</div>
+            </div>
+
+            <div class="field">
+              <label for="model-flag">模型类型</label>
+              <select id="model-flag" name="model_flag">
+                <option value="openai" selected>openai</option>
+                <option value="ollama">ollama</option>
+              </select>
+            </div>
+
+            <div class="field" id="api-key-field">
+              <label for="api-key">OpenAI API Key</label>
+              <input id="api-key" name="openai_api_key" type="password" placeholder="sk-...">
+              <div class="hint">当模型类型为 `openai` 时需要填写。</div>
+            </div>
+
+            <div class="field">
+              <label for="top-k">Top K</label>
+              <select id="top-k" name="top_k">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+              </select>
+              <div class="hint">与后端保持一致，仅允许 1 到 3。</div>
+            </div>
+          </section>
+
+          <section class="section">
+            <h2 class="section-title">文件上传</h2>
+
+            <div class="file-box">
+              <div class="field">
+                <label for="upload-file">上传知识文件</label>
+                <input id="upload-file" name="upload_file" type="file" accept=".txt,.pdf" multiple>
+              </div>
+              <div class="hint">支持多个 `txt` / `pdf` 文件。不上传时，会走普通对话或使用当前会话已有知识库。</div>
+            </div>
+          </section>
+
+          <section class="section">
+            <h2 class="section-title">提问</h2>
+
+            <div class="field">
+              <label for="question">问题内容</label>
+              <textarea id="question" name="question" placeholder="请输入你的问题，比如：帮我总结这份文档的重点内容" required></textarea>
+            </div>
+
+            <div class="button-row">
+              <button id="send-button" class="btn btn-primary" type="submit">发送</button>
+              <button id="clear-button" class="btn btn-danger" type="button">清空当前会话</button>
+            </div>
+          </section>
+        </form>
+      </aside>
+
+      <section class="panel content">
+        <div class="status-bar">
+          <div class="status-item">
+            <span class="status-label">当前状态</span>
+            <span id="status-text" class="status-value">Idle</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">当前会话</span>
+            <span id="status-session" class="status-value">session_id = 1</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">当前模式</span>
+            <span id="status-mode" class="status-value">openai / top_k = 3</span>
+          </div>
+        </div>
+
+        <section class="section">
+          <h2 class="section-title">聊天记录</h2>
+          <div id="chat-list" class="chat-list empty-state">
+            <div class="empty-box">还没有聊天记录，输入问题后即可开始。</div>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">参考片段</h2>
+          <div id="reference-box" class="reference-box">
+            <div class="empty-box">本次回答未返回文档命中信息。</div>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">状态提示</h2>
+          <div id="notice-box" class="notice-box">页面已就绪，可以直接发送请求。</div>
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">错误提示</h2>
+          <div id="error-box" class="error-box hidden"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+myenv/
+.env
+__pycache__/
+*.pyc
+.vscode/
+deleted_code.txt
+faiss_db/
+test_file/
+local_model_utils.py
+frontend_design.md
+*.db
+backend_backup/
