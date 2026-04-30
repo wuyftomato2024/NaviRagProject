@@ -61,7 +61,6 @@ def chatDelete(sql_db ,session_id):
                 None
             }
         }
-
     )
   
 

@@ -3,9 +3,8 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 from app.api.chat import Chat
-from app.core.vector_store import delete_vector_db
+from app.api.vector_store_delete import sessionDeleteLogic 
 from app.core.database import engine ,Base ,SessionLocal
-from app.repositories.chat_repository import chatDelete
 from app.schemas.model import ApiResponse
 
 # 创建 FastAPI 应用
@@ -101,7 +100,10 @@ async def chat(
 # *****
 @app.delete("/chat/db")
 def sessionDelete(session_id :int ,sql_db = Depends(get_db)):
-    delete_vector_db(session_id = session_id)
-    chatDelete(sql_db = sql_db ,session_id = session_id)
 
-    return {"deleted":True}
+    response = sessionDeleteLogic(
+        session_id = session_id ,
+        sql_db = sql_db
+        )
+
+    return response

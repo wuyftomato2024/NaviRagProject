@@ -27,7 +27,4 @@ def load_local_vector_db(session_id ,embedding_model):
 # *****
 def delete_vector_db(session_id) :
     vector_db_path = f"faiss_db/{session_id}/"
-    vector_db_flag = os.path.exists(vector_db_path)
-    if vector_db_flag == False:
-        raise HTTPException(status_code=404 ,detail="the file is not")
     shutil.rmtree(vector_db_path)
