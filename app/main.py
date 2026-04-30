@@ -5,7 +5,11 @@ from typing import List
 from app.api.chat import Chat
 from app.api.vector_store_delete import sessionDeleteLogic 
 from app.core.database import engine ,Base ,SessionLocal
+from app.core.dataFormat_change import sql_message_process
 from app.schemas.model import ApiResponse
+import os
+from pathlib import Path
+from dotenv import load_dotenv
 
 # 创建 FastAPI 应用
 app = FastAPI()
@@ -75,7 +79,7 @@ async def error(request,exc :Exception):
 async def chat(
     # Form为表单里接收普通数据，File为表单里接收普通数据
     question : str = Form(...),
-    openai_api_key: str | None  = Form(None),
+    # openai_api_key: str | None  = Form(None),
     # 把上传文件变成一个List，以上传复数文件
     upload_file : List [UploadFile] | None = File(None),
     top_k :int = Form(3,ge=1,le=3),
@@ -83,7 +87,12 @@ async def chat(
     sql_db = Depends(get_db) ,
     model_flag: str = Form("openai")
 ):
-    
+    # ①__file__：当前这个 .py 文件的位置 ②Path(__file__)：把它变成路径对象 ③.resolve()：转成完整绝对路径 ④.parents[1]：往上退两层目录
+    BASE_DIR = Path(__file__).resolve().parents[1]
+    load_dotenv(BASE_DIR / "configuration.env")
+    openai_api_key = os.getenv("OPENAI_API_KEY")
+    print(openai_api_key)
+
     response = await Chat(
         question = question ,
         openai_api_key = openai_api_key ,
@@ -107,3 +116,12 @@ def sessionDelete(session_id :int ,sql_db = Depends(get_db)):
         )
 
     return response
+
+# *****
+# session删除
+# *****
+@app.get("/chat")
+def getChat(session_id :int , sql_db = Depends(get_db)):
+    message_list = sql_message_process(sql_db =sql_db, session_id =session_id)
+
+    return message_list

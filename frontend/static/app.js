@@ -1,13 +1,12 @@
 const chatForm = document.getElementById("chat-form");
 const modelFlagSelect = document.getElementById("model-flag");
-const apiKeyField = document.getElementById("api-key-field");
-const apiKeyInput = document.getElementById("api-key");
 const sessionIdInput = document.getElementById("session-id");
 const topKSelect = document.getElementById("top-k");
 const questionInput = document.getElementById("question");
 const uploadInput = document.getElementById("upload-file");
 const sendButton = document.getElementById("send-button");
 const clearButton = document.getElementById("clear-button");
+const loadHistoryButton = document.getElementById("load-history-button");
 const statusText = document.getElementById("status-text");
 const statusSession = document.getElementById("status-session");
 const statusMode = document.getElementById("status-mode");
@@ -17,6 +16,7 @@ const noticeBox = document.getElementById("notice-box");
 const errorBox = document.getElementById("error-box");
 
 const API_BASE_URL = "http://127.0.0.1:8000";
+const DEFAULT_NOTICE = "Ready. You can send a request or load history.";
 
 function escapeHtml(value) {
   return String(value)
@@ -27,11 +27,16 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-function setLoading(isLoading) {
-  sendButton.disabled = isLoading;
-  clearButton.disabled = isLoading;
+function setControlsDisabled(isDisabled) {
+  sendButton.disabled = isDisabled;
+  clearButton.disabled = isDisabled;
+  loadHistoryButton.disabled = isDisabled;
+}
+
+function setLoading(isLoading, message = "Thinking...") {
+  setControlsDisabled(isLoading);
   statusText.textContent = isLoading ? "Loading" : "Idle";
-  noticeBox.textContent = isLoading ? "thinking..." : "页面已就绪，可以直接发送请求。";
+  noticeBox.textContent = isLoading ? message : DEFAULT_NOTICE;
 }
 
 function showError(message) {
@@ -53,45 +58,41 @@ function updateStatus() {
   statusMode.textContent = `${modelFlag} / top_k = ${topK}`;
 }
 
-function toggleApiKeyField() {
-  const isOpenAI = modelFlagSelect.value === "openai";
+function normalizeHistoryItem(item) {
+  const role = String(item?.role || "").toLowerCase();
+  const content = String(item?.content ?? "").trim();
 
-  apiKeyField.classList.toggle("hidden", !isOpenAI);
-  apiKeyInput.required = isOpenAI;
-
-  if (!isOpenAI) {
-    apiKeyInput.value = "";
-  }
-
-  updateStatus();
+  return {
+    role: role === "human" || role === "user" ? "human" : "ai",
+    content,
+  };
 }
 
 function renderChatHistory(chatHistory) {
   if (!Array.isArray(chatHistory) || chatHistory.length === 0) {
-    chatList.innerHTML = '<div class="empty-box">还没有聊天记录，输入问题后即可开始。</div>';
+    chatList.innerHTML = '<div class="empty-box">No chat history for this session.</div>';
+    chatList.classList.add("empty-state");
     return;
   }
 
+  chatList.classList.remove("empty-state");
+
   const html = chatHistory
+    .map(normalizeHistoryItem)
     .map((item) => {
-      const role = item.role === "human" ? "User" : "AI";
       const bubbleClass = item.role === "human" ? "bubble-user" : "bubble-ai";
 
-      return `
-        <article class="bubble ${bubbleClass}">
-          <span class="bubble-role">${role}</span>
-          ${escapeHtml(item.content)}
-        </article>
-      `;
+      return `<article class="bubble ${bubbleClass}">${escapeHtml(item.content)}</article>`;
     })
     .join("");
 
   chatList.innerHTML = html;
+  chatList.lastElementChild?.scrollIntoView({ block: "nearest" });
 }
 
 function renderReferences(tagList) {
   if (!Array.isArray(tagList) || tagList.length === 0) {
-    referenceBox.innerHTML = '<div class="empty-box">本次回答未返回文档命中信息。</div>';
+    referenceBox.innerHTML = '<div class="empty-box">No reference chunks returned for this response.</div>';
     return;
   }
 
@@ -102,34 +103,73 @@ function renderReferences(tagList) {
   referenceBox.innerHTML = `<ol class="reference-list">${html}</ol>`;
 }
 
-function validateForm() {
+function validateSessionId() {
   const sessionId = sessionIdInput.value.trim();
+
+  if (!sessionId) {
+    return "Please enter a Session ID first.";
+  }
+
+  return null;
+}
+
+function validateForm() {
+  const sessionError = validateSessionId();
   const question = questionInput.value.trim();
-  const modelFlag = modelFlagSelect.value;
   const files = Array.from(uploadInput.files || []);
   const allowedExtensions = [".txt", ".pdf"];
 
-  if (!sessionId) {
-    return "请先填写 Session ID。";
+  if (sessionError) {
+    return sessionError;
   }
 
   if (!question) {
-    return "请输入问题内容。";
-  }
-
-  if (modelFlag === "openai" && !apiKeyInput.value.trim()) {
-    return "当前使用 OpenAI 模式，请先填写 API Key。";
+    return "Please enter a question.";
   }
 
   for (const file of files) {
     const lowerName = file.name.toLowerCase();
     const isValid = allowedExtensions.some((ext) => lowerName.endsWith(ext));
     if (!isValid) {
-      return "仅支持上传 txt 或 pdf 文件。";
+      return "Only txt and pdf files are supported.";
     }
   }
 
   return null;
+}
+
+async function loadChatHistory() {
+  clearError();
+  updateStatus();
+
+  const validationError = validateSessionId();
+  if (validationError) {
+    showError(validationError);
+    return;
+  }
+
+  const sessionId = sessionIdInput.value.trim();
+  setLoading(true, "Loading chat history...");
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/chat?session_id=${encodeURIComponent(sessionId)}`);
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.detail || "Failed to load chat history.");
+    }
+
+    renderChatHistory(result);
+    renderReferences([]);
+    statusText.textContent = "Success";
+    noticeBox.textContent = `Loaded history for session_id = ${sessionId}.`;
+  } catch (error) {
+    statusText.textContent = "Error";
+    noticeBox.textContent = "Failed to load history. Check the backend service and session_id.";
+    showError(error.message || "Unknown error while loading history.");
+  } finally {
+    setControlsDisabled(false);
+  }
 }
 
 async function handleSubmit(event) {
@@ -149,10 +189,6 @@ async function handleSubmit(event) {
   formData.append("model_flag", modelFlagSelect.value);
   formData.append("top_k", topKSelect.value);
 
-  if (modelFlagSelect.value === "openai") {
-    formData.append("openai_api_key", apiKeyInput.value.trim());
-  }
-
   for (const file of uploadInput.files) {
     formData.append("upload_file", file);
   }
@@ -168,21 +204,20 @@ async function handleSubmit(event) {
     const result = await response.json();
 
     if (!response.ok || result.status !== "ok") {
-      throw new Error(result.detail || "请求失败，请稍后重试。");
+      throw new Error(result.detail || "Request failed.");
     }
 
     renderChatHistory(result.data.chatHistory);
     renderReferences(result.data.tag);
     statusText.textContent = "Success";
-    noticeBox.textContent = "请求成功，聊天记录已更新。";
+    noticeBox.textContent = "Request succeeded. Chat history was updated.";
     questionInput.value = "";
   } catch (error) {
     statusText.textContent = "Error";
-    noticeBox.textContent = "请求未成功，请检查参数、后端状态或浏览器控制台。";
-    showError(error.message || "发生未知错误。");
+    noticeBox.textContent = "Request failed. Check parameters, backend status, or the browser console.";
+    showError(error.message || "Unknown error.");
   } finally {
-    sendButton.disabled = false;
-    clearButton.disabled = false;
+    setControlsDisabled(false);
   }
 }
 
@@ -190,18 +225,19 @@ async function handleClearSession() {
   clearError();
   updateStatus();
 
-  const sessionId = sessionIdInput.value.trim();
-  if (!sessionId) {
-    showError("请先填写 Session ID。");
+  const validationError = validateSessionId();
+  if (validationError) {
+    showError(validationError);
     return;
   }
 
-  const confirmed = window.confirm(`确认删除 session_id = ${sessionId} 的聊天记录和向量库吗？`);
+  const sessionId = sessionIdInput.value.trim();
+  const confirmed = window.confirm(`Delete chat history and vector store for session_id = ${sessionId}?`);
   if (!confirmed) {
     return;
   }
 
-  setLoading(true);
+  setLoading(true, "Clearing current session...");
 
   try {
     const response = await fetch(`${API_BASE_URL}/chat/db?session_id=${encodeURIComponent(sessionId)}`, {
@@ -211,7 +247,7 @@ async function handleClearSession() {
     const result = await response.json();
 
     if (!response.ok || result.deleted !== true) {
-      throw new Error(result.detail || "删除失败，请稍后重试。");
+      throw new Error(result.detail || "Delete failed.");
     }
 
     renderChatHistory([]);
@@ -219,22 +255,22 @@ async function handleClearSession() {
     questionInput.value = "";
     uploadInput.value = "";
     statusText.textContent = "Success";
-    noticeBox.textContent = "当前会话已删除。";
+    noticeBox.textContent = "Current session was cleared.";
   } catch (error) {
     statusText.textContent = "Error";
-    noticeBox.textContent = "删除未成功，请检查当前会话是否存在或浏览器控制台。";
-    showError(error.message || "删除时发生未知错误。");
+    noticeBox.textContent = "Delete failed. Confirm the current session exists.";
+    showError(error.message || "Unknown error while deleting.");
   } finally {
-    sendButton.disabled = false;
-    clearButton.disabled = false;
+    setControlsDisabled(false);
   }
 }
 
 chatForm.addEventListener("submit", handleSubmit);
 clearButton.addEventListener("click", handleClearSession);
-modelFlagSelect.addEventListener("change", toggleApiKeyField);
+loadHistoryButton.addEventListener("click", loadChatHistory);
+modelFlagSelect.addEventListener("change", updateStatus);
 sessionIdInput.addEventListener("input", updateStatus);
 topKSelect.addEventListener("change", updateStatus);
 
-toggleApiKeyField();
+updateStatus();
 renderReferences([]);

@@ -10,3 +10,4 @@ local_model_utils.py
 frontend_design.md
 *.db
 backend_backup/
+configuration.env
