@@ -1,195 +1,244 @@
-# NaviRagProject README Draft
+# NaviRagProject
 
-## 1. Project Overview
+NaviRagProject is a FastAPI-based RAG chat application that supports normal chat, file-based RAG chat, SQL-based chat history, session history query, session deletion, local FAISS vector storage, and OpenAI / Ollama model switching.
 
-NaviRagProject is a FastAPI-based AI Chat / RAG application that supports switching between cloud-based and local language models.
+This project started as a learning RAG demo and has gradually been refactored into a small AI application that can run locally and be deployed to AWS EC2.
 
-The project supports normal chat, file-based question answering, RAG-based retrieval-augmented responses, SQL-based chat history persistence, local FAISS vector store save/load, and session deletion.
+## Overview
 
-The current goal of this project is to build a prototype AI Chat / RAG application that can run locally, be deployed to AWS EC2, and be tested through a simple frontend page.
+The project currently supports:
 
----
+- Normal chat
+- RAG chat with uploaded files
+- Automatic routing between normal chat and RAG chat
+- SQL-based chat history persistence
+- Session history query by session_id
+- Session deletion by session_id
+- Local FAISS vector store save/load
+- OpenAI / Ollama model switching
+- Local embedding model support
+- HTML / CSS / JavaScript test frontend
+- AWS EC2 deployment verification
 
-## 2. Tech Stack
+## Tech Stack
+
+### Backend
+
+- Python
+- FastAPI
+- SQLAlchemy
+- MySQL / MariaDB
+- FAISS
+- LangChain
+- OpenAI API
+- Ollama
 
 ### Frontend
+
 - HTML
 - CSS
 - JavaScript
 
-### Backend
-- Python
-- FastAPI
+### Deployment
+
+- AWS EC2
 - Uvicorn
+- Python http.server
 
-### Database
-- MySQL
-- SQLAlchemy
-- PyMySQL
+## Main Features
 
-### AI / RAG
-- LangChain
-- FAISS
-- OpenAI API
-- Ollama local models
-- DeepSeek 14B local chat model
-- Local embedding model
+### 1. Normal Chat
 
-### Authentication
-- User authentication has not been implemented yet
-- JWT authentication is planned as a future improvement
+When no file is uploaded, the system works as a normal AI chat application.
 
----
+Chat history is saved into SQL and separated by session_id.
 
-## 3. Main Features
+### 2. RAG Chat with Files
 
-### Normal Chat
+When a txt or pdf file is uploaded, the backend loads the file, splits it into chunks, creates embeddings, stores them in a local FAISS vector store, retrieves relevant chunks, and sends the retrieved context to the model to generate an answer.
 
-When no file is uploaded, the application works as a normal AI chat system.
+### 3. Local FAISS Vector Store
 
-### RAG File Question Answering
+Vector stores are saved locally by session_id:
 
-When a txt or pdf file is uploaded, the system splits the file content into chunks, converts them into embeddings, and stores them in a local FAISS vector store.
+```text
+faiss_db/{session_id}/
+```
 
-After that, users can ask questions based on the uploaded file content.
+If the user does not upload a new file but the vector store exists for the session_id, the backend can load the local FAISS store and continue RAG chat.
 
-### Automatic Mode Selection
+### 4. SQL Chat History
 
-The system can judge whether a user question should be handled by normal chat or RAG mode.
+Chat messages are stored in MySQL.
 
-### Local Vector Store Save / Load
+The project supports querying chat history by session_id and displaying it on the frontend.
 
-The FAISS vector store is saved locally based on `session_id`.
+### 5. Session Deletion
 
-If a vector store already exists for a session, the user can continue asking questions without uploading the file again.
+The project supports deleting a session by session_id.
 
-### SQL Chat History Persistence
+It deletes:
 
-Both normal chat and RAG chat save user questions and AI responses into MySQL.
+- SQL chat history
+- Local FAISS vector store directory
 
-### Session Deletion
+If the local vector store does not exist, SQL chat history can still be deleted normally.
 
-The application supports deleting chat history by `session_id`.
+### 6. Model Switching
 
-If a local vector store exists for that `session_id`, it will also be deleted.
+The project supports model switching through model_flag:
 
-If no local vector store exists, the SQL chat history can still be deleted normally.
+- openai
+- ollama
 
-### Frontend Test Page
+OpenAI mode requires an OpenAI API key.  
+Ollama mode uses local chat and embedding models.
 
-A simple frontend page built with HTML, CSS, and JavaScript is included.
+### 7. Test Frontend
 
-It can send requests to the FastAPI backend and display the returned results.
+The frontend supports:
 
----
+- Asking questions
+- Uploading files
+- Setting session_id
+- Selecting model mode
+- Displaying answers
+- Displaying source files
+- Querying session history
+- Deleting sessions
 
-## 4. Project Structure
+## Project Structure
 
 ```text
 NaviRagProject/
 ├── app/
-│   ├── main.py                         # FastAPI entry point
-│   ├── api/                            # API route layer
-│   │   └── chat.py                     # Chat / delete related APIs
-│   ├── services/                       # Business logic layer
-│   │   ├── chunk_hit_service.py        # Source file detection
-│   │   ├── judge_service.py            # Judge RAG / normal chat mode
-│   │   ├── normal_chat_service.py      # Normal chat logic
-│   │   ├── rag_service.py              # RAG chat logic
-│   │   ├── summary_service.py          # File summary related logic
-│   │   └── uploadfile_service.py       # File upload processing
-│   ├── repositories/                   # Data access layer
-│   │   └── chat_repository.py          # SQL operations for chat history
-│   ├── core/                           # Configuration / database / common utilities
-│   │   ├── ai_model_select.py          # OpenAI / Ollama model selection
-│   │   ├── ai_request_format_select.py # Response prompt style selection
-│   │   ├── chunk_search.py             # Vector search and chunk context building
-│   │   ├── database.py                 # Database connection settings
-│   │   ├── dataFormat_change.py        # Data format conversion for frontend response
-│   │   ├── db_format.py                # SQLAlchemy table definitions
-│   │   └── vector_store.py             # Vector store save / load / delete
-│   ├── schemas/                        # Pydantic models
-│   │   ├── models.py                   # API response models
-│   │   └── db_model.py                 # DB request models
-│   └── prompts/                        # Prompt templates
+│   ├── main.py
+│   ├── api/
+│   │   └── chat.py
+│   ├── services/
+│   │   ├── chunk_hit_service.py
+│   │   ├── judge_service.py
+│   │   ├── normal_chat_service.py
+│   │   ├── rag_service.py
+│   │   ├── summary_service.py
+│   │   └── uploadfile_service.py
+│   ├── repositories/
+│   │   └── chat_repository.py
+│   ├── core/
+│   │   ├── ai_model_select.py
+│   │   ├── ai_request_format_select.py
+│   │   ├── chunk_search.py
+│   │   ├── database.py
+│   │   ├── dataFormat_change.py
+│   │   ├── db_format.py
+│   │   └── vector_store.py
+│   ├── schemas/
+│   │   ├── models.py
+│   │   └── db_model.py
+│   └── prompts/
 │       └── prompt_builder.py
-├── frontend/                           # Frontend page
+├── frontend/
 │   └── static/
-│       ├── app.js
 │       ├── index.html
+│       ├── app.js
 │       └── style.css
-├── faiss_db/                           # Local vector store directory (not recommended for Git)
+├── docs/
 ├── requirements.txt
+├── configuration.example.env
 └── README.md
 ```
 
----
+## Configuration
 
-## 5. How to Run
+The project can load environment values from a configuration file.
 
-### 5.1 Start the Backend
+Create the following file in the project root:
 
-Run the following command from the project root directory:
+```text
+configuration.env
+```
+
+Example:
+
+```env
+OPENAI_API_KEY=your_openai_api_key
+MODEL_FLAG=openai
+DATABASE_URL=mysql+pymysql://root:password@localhost/test_db
+```
+
+Important:
+
+```text
+configuration.env
+```
+
+should not be committed to GitHub.
+
+A sample file such as:
+
+```text
+configuration.example.env
+```
+
+can be committed as a reference.
+
+## Backend Startup
+
+From the project root:
+
+```bash
+python -m venv myenv
+source myenv/bin/activate
+```
+
+On Windows:
+
+```bash
+myenv\Scripts\activate
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Start the backend:
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-For EC2 deployment, allow external access:
-
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
-
-After the backend starts, access:
+Open:
 
 ```text
 http://localhost:8000/docs
 ```
 
-On EC2:
+## Frontend Startup
 
-```text
-http://<EC2_PUBLIC_IP>:8000/docs
-```
-
----
-
-### 5.2 Start the Frontend
-
-Go to the frontend static directory.
-
-Windows:
-
-```bash
-cd frontend\static
-python -m http.server 3000
-```
-
-Linux / EC2:
+Go to the frontend directory:
 
 ```bash
 cd frontend/static
-python3.11 -m http.server 3000
+python -m http.server 3000
 ```
 
-Open in browser:
+Open:
 
 ```text
 http://localhost:3000
 ```
 
-On EC2:
+When deploying to EC2, update API_BASE_URL in the frontend JavaScript file:
 
-```text
-http://<EC2_PUBLIC_IP>:3000
+```js
+const API_BASE_URL = "http://your-ec2-public-ip:8000";
 ```
 
----
+## API Overview
 
-## 6. API Overview
-
-### Chat API
+### Chat / RAG API
 
 ```text
 POST /chat
@@ -197,73 +246,74 @@ POST /chat
 
 Main parameters:
 
-- `question`: user question
-- `upload_file`: optional uploaded file
-- `top_k`: number of retrieved chunks
-- `session_id`: session ID
-- `model_flag`: model provider, supports `openai` / `ollama`
-- `openai_api_key`: OpenAI API key, required when using OpenAI
+- question
+- session_id
+- upload_file
+- top_k
+- model_flag
+- openai_api_key
 
-Behavior:
+Notes:
 
-- If no file is uploaded, the system runs normal chat
-- If a file is uploaded, the system runs RAG mode
-- If a local vector store already exists, the user can continue asking questions without uploading the file again
+- Without file upload, the system runs normal chat or loads an existing vector store
+- With file upload, the system creates or overwrites the local vector store for the session_id
+- model_flag supports openai / ollama
 
----
+### Query Session History
 
-### Delete Session API
+```text
+GET /chat/history
+```
+
+Returns chat history by session_id.
+
+### Delete Session
 
 ```text
 DELETE /chat/db
 ```
 
-Main parameter:
+Deletes:
 
-- `session_id`: target session ID to delete
+- SQL chat history
+- Local vector store directory
 
-Behavior:
+by session_id.
 
-- Deletes SQL chat history for the given `session_id`
-- Deletes the corresponding local vector store if it exists
+## AWS Deployment Notes
 
----
+This project has been deployed and verified on AWS EC2.
 
-## 7. Current Progress
+Verified items:
 
-The current version has completed:
+- Python 3.11 installation on EC2
+- requirements.txt installation
+- MySQL / MariaDB installation on EC2
+- Backend startup
+- Frontend startup with Python http.server
+- Mobile browser access to EC2 frontend
+- Frontend request to backend
+- CORS configuration
+- MySQL Chinese character encoding issue fix
 
-- Basic FastAPI backend structure
-- Normal chat feature
-- RAG file question answering
-- Manual RAG flow
-- MySQL chat history persistence
-- Local FAISS vector store save/load
-- OpenAI / Ollama model switching
-- Local embedding model integration
-- Session deletion
-- Simple frontend page
-- AWS EC2 deployment verification
-- External mobile access verification
+Common notes:
 
----
+- MySQL / MariaDB should use utf8mb4 to support Chinese text
+- EC2 security group should open ports 8000 and 3000 for testing
+- FastAPI CORS middleware is required when frontend and backend use different ports
+- faiss_db uses relative paths, so the backend should be started from the project root
 
-## 8. Future Plans
+## Future Plans
 
-- Add session history list view
-- Add JWT user authentication
+- Improve README and deployment documents
+- Add JWT authentication
+- Add more formal user/session management
 - Improve frontend UI
-- Organize OpenAI API key / Database URL into configuration files
-- Improve AWS deployment workflow
-- Consider using Nginx or systemd for service management
-- Add more complete README and deployment documentation
+- Improve configuration management
+- Consider Nginx / systemd for production-like deployment
+- Improve RAG retrieval quality and source display
 
----
+## Project Status
 
-## 9. Notes
-
-This project originally started as a learning project for RAG, FastAPI, and SQLAlchemy.
-
-It has gradually evolved into a deployable AI Chat application that supports normal chat, file-based question answering, SQL history persistence, local vector store management, and model switching.
-
-The current version is still a semi-finished project, but it already has the basic structure and functionality of a complete portfolio project.
+This is a working prototype / semi-finished project.  
+Core features are implemented and verified locally and on AWS EC2.
