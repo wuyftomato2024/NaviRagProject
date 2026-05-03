@@ -85,6 +85,18 @@ body {
   font-weight: 700;
 }
 
+.section-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.section-heading-row .section-title {
+  margin: 0;
+}
+
 .field {
   margin-bottom: 14px;
 }
@@ -144,6 +156,25 @@ textarea:focus {
   padding: 14px;
 }
 
+.session-id-display {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-soft);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.session-button-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 .button-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -197,6 +228,95 @@ textarea:focus {
 .btn-small {
   min-height: 40px;
   padding: 9px 12px;
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-icon:hover:enabled {
+  background: var(--panel-soft);
+  border-color: #b9c6d8;
+  color: var(--text);
+}
+
+.btn-icon:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.session-row {
+  display: grid;
+  grid-template-columns: 1fr 28px;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.session-row:hover {
+  background: var(--panel-soft);
+  border-color: var(--border);
+}
+
+.session-row.is-active {
+  background: var(--user-bubble);
+  border-color: #c9dafc;
+  color: #173b7a;
+  font-weight: 700;
+}
+
+.session-item {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1.35;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-delete {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  text-align: center;
+}
+
+.session-delete:hover {
+  background: #fee2e2;
+  color: var(--danger);
 }
 
 .status-bar {
@@ -345,6 +465,10 @@ textarea:focus {
   }
 
   .button-row {
+    grid-template-columns: 1fr;
+  }
+
+  .session-button-row {
     grid-template-columns: 1fr;
   }
 

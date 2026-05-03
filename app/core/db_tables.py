@@ -11,8 +11,18 @@ class ChatMessages(Base):
     session_id = Column(String(50) ,nullable=False)
     role = Column(String(100) ,nullable=False)
     content = Column(Text ,nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     # __tablename__ = 这张表叫什么
     # unique=True = 不能重复
     # index=True = 更方便查找
+
+class ChatSession(Base):
+    __tablename__ = "chatsessions"
+
+    # 数字类型(int)配合主key，会自动分配数字
+    id = Column(Integer ,primary_key=True ,index=True)
+    session_id = Column(String(50) ,nullable=False)
+    title = Column(String(100) ,nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

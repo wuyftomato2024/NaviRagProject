@@ -1,5 +1,5 @@
 import os
-from app.repositories.chat_repository import chatDelete
+from app.repositories.chat_repository import chatDelete ,sessionDelete
 from app.core.vector_store import delete_vector_db
 
 def sessionDeleteLogic(session_id ,sql_db):
@@ -9,5 +9,6 @@ def sessionDeleteLogic(session_id ,sql_db):
         delete_vector_db(session_id = session_id)
 
     chatDelete(sql_db = sql_db ,session_id = session_id)
+    sessionDelete(sql_db = sql_db ,session_id = session_id)
 
     return {"deleted":True}

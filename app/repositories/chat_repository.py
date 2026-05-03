@@ -1,8 +1,11 @@
 from app.schemas.db_schema import DBResponse
-from app.core.db_tables import ChatMessages
+from app.core.db_tables import ChatMessages ,ChatSession
 from fastapi import HTTPException
 from langchain_core.messages import AIMessage ,HumanMessage
 
+# *****
+# 登记聊天记录
+# *****
 def chatCreate(sql_db , session_id ,role , content):
 
     newChat = ChatMessages(
@@ -27,6 +30,9 @@ def chatCreate(sql_db , session_id ,role , content):
 
     )
 
+# *****
+# 获取聊天记录
+# *****
 def chatHistoryGet(sql_db ,session_id):
     chatHistory_map = []
 
@@ -43,6 +49,9 @@ def chatHistoryGet(sql_db ,session_id):
 
     return chatHistory_map
 
+# *****
+# 删除聊天记录
+# *****
 def chatDelete(sql_db ,session_id):
     chatHistorys = sql_db.query(ChatMessages).filter(ChatMessages.session_id == session_id).all()
 
@@ -63,6 +72,53 @@ def chatDelete(sql_db ,session_id):
         }
     )
   
+# *****
+# 登录历史会话
+# *****
+def sessionCreate(sql_db ,session_id ,title):
+    new_session =ChatSession(
+        session_id = session_id ,
+        title = title
+    )
+
+    sql_db.add(new_session)
+    sql_db.commit()
+
+    return {"status" : "ok"}
+
+# *****
+# 获取历史会话
+# *****
+def sessionGet(sql_db):
+    chatsessions = sql_db.query(ChatSession).order_by(ChatSession.updated_at.desc()).all()
+
+    chatsessions_map = [{"title":doc.title ,"session_id":doc.session_id} for doc in chatsessions]
+
+    return chatsessions_map
+
+# *****
+# 获取历史会话,id对比用
+# *****
+def sessionIdGet(sql_db ,session_id):
+    chatsessions = sql_db.query(ChatSession).filter(ChatSession.session_id == session_id).first()
+
+    return chatsessions
+
+# *****
+# 删除历史会话
+# *****
+def sessionDelete(sql_db ,session_id):
+    old_session = sql_db.query(ChatSession).filter(ChatSession.session_id == session_id).first()
+
+    if old_session :
+        sql_db.delete(old_session)
+        sql_db.commit()
+
+
+
+
+
+
 
 def chatMessages(user):
     return {

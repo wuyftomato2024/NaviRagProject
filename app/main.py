@@ -7,6 +7,7 @@ from app.api.vector_store_delete import sessionDeleteLogic
 from app.core.database import engine ,Base ,SessionLocal
 from app.core.dataFormat_change import sql_message_process
 from app.schemas.model import ApiResponse
+from app.repositories.chat_repository import sessionCreate ,sessionGet ,sessionIdGet
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -83,7 +84,7 @@ async def chat(
     # 把上传文件变成一个List，以上传复数文件
     upload_file : List [UploadFile] | None = File(None),
     top_k :int = Form(3,ge=1,le=3),
-    session_id :int = Form(...) ,
+    session_id :str = Form(...) ,
     sql_db = Depends(get_db) ,
     model_flag: str = Form("openai")
 ):
@@ -91,7 +92,11 @@ async def chat(
     BASE_DIR = Path(__file__).resolve().parents[1]
     load_dotenv(BASE_DIR / "configuration.env")
     openai_api_key = os.getenv("OPENAI_API_KEY")
-    print(openai_api_key)
+    
+    session_result = sessionIdGet(sql_db = sql_db ,session_id = session_id )
+    if session_result is None or not session_result:
+        title = question[:20]
+        sessionCreate(sql_db = sql_db ,session_id = session_id , title = title)
 
     response = await Chat(
         question = question ,
@@ -105,10 +110,10 @@ async def chat(
     return response
 
 # *****
-# session删除
+# 聊天历史删除
 # *****
-@app.delete("/chat/db")
-def sessionDelete(session_id :int ,sql_db = Depends(get_db)):
+@app.delete("/chat/history/{session_id}")
+def sessionDelete(session_id :str ,sql_db = Depends(get_db)):
 
     response = sessionDeleteLogic(
         session_id = session_id ,
@@ -118,10 +123,23 @@ def sessionDelete(session_id :int ,sql_db = Depends(get_db)):
     return response
 
 # *****
-# session删除
+# 根据id获取聊天历史
 # *****
-@app.get("/chat")
-def getChat(session_id :int , sql_db = Depends(get_db)):
+@app.get("/chat/history/{session_id}")
+def getChat(session_id :str , sql_db = Depends(get_db)):
     message_list = sql_message_process(sql_db =sql_db, session_id =session_id)
 
     return message_list
+
+
+# *****
+# 左侧side bar消息列表获取
+# *****
+@app.get("/chat/session")
+def getSession(sql_db = Depends(get_db)):
+    response = sessionGet(sql_db)
+    
+    # if not response: 
+    #     response = None
+
+    return response

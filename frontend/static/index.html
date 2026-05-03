@@ -15,15 +15,28 @@
 
     <main class="layout">
       <aside class="panel sidebar">
+        <section class="section history-panel">
+          <div class="section-heading-row">
+            <h2 class="section-title">历史会话</h2>
+            <button id="refresh-session-button" class="btn-icon" type="button" title="刷新历史会话">↻</button>
+          </div>
+          <div id="session-list" class="session-list">
+            <div class="empty-box">暂无历史会话。</div>
+          </div>
+        </section>
+
         <form id="chat-form">
           <section class="section">
             <h2 class="section-title">会话设置</h2>
 
             <div class="field">
-              <label for="session-id">Session ID</label>
-              <input id="session-id" name="session_id" type="number" value="1" min="1" required>
-              <div class="hint">用于区分不同会话，对应后端的 `session_id`。</div>
-              <button id="load-history-button" class="btn btn-secondary btn-small" type="button">加载历史</button>
+              <label>Session ID</label>
+              <div id="session-id-display" class="session-id-display"></div>
+              <div class="hint">系统会自动生成并保存当前会话 ID。</div>
+              <div class="session-button-row">
+                <button id="load-history-button" class="btn btn-secondary btn-small" type="button">加载历史</button>
+                <button id="new-session-button" class="btn btn-secondary btn-small" type="button">新建会话</button>
+              </div>
             </div>
 
             <div class="field">
@@ -67,7 +80,7 @@
 
             <div class="button-row">
               <button id="send-button" class="btn btn-primary" type="submit">发送</button>
-              <button id="clear-button" class="btn btn-danger" type="button">清空当前会话</button>
+              <button id="clear-button" class="btn btn-danger" type="button">删除当前会话</button>
             </div>
           </section>
         </form>
@@ -81,7 +94,7 @@
           </div>
           <div class="status-item">
             <span class="status-label">当前会话</span>
-            <span id="status-session" class="status-value">session_id = 1</span>
+            <span id="status-session" class="status-value"></span>
           </div>
           <div class="status-item">
             <span class="status-label">当前模式</span>
