@@ -2,6 +2,7 @@ from app.schemas.db_schema import DBResponse
 from app.core.db_tables import ChatMessages ,ChatSession
 from fastapi import HTTPException
 from langchain_core.messages import AIMessage ,HumanMessage
+from datetime import datetime ,timezone
 
 # *****
 # 登记聊天记录
@@ -92,12 +93,15 @@ def sessionCreate(sql_db ,session_id ,title):
 def sessionGet(sql_db):
     chatsessions = sql_db.query(ChatSession).order_by(ChatSession.updated_at.desc()).all()
 
+    if not chatsessions :
+        chatsessions_map = []
+
     chatsessions_map = [{"title":doc.title ,"session_id":doc.session_id} for doc in chatsessions]
 
     return chatsessions_map
 
 # *****
-# 获取历史会话,id对比用
+# 按照session id来判断 是否第一次记录此会话
 # *****
 def sessionIdGet(sql_db ,session_id):
     chatsessions = sql_db.query(ChatSession).filter(ChatSession.session_id == session_id).first()
@@ -114,8 +118,16 @@ def sessionDelete(sql_db ,session_id):
         sql_db.delete(old_session)
         sql_db.commit()
 
+# *****
+# 更新历史会话时间
+# *****
+def refreshSessionTime(sql_db ,session_id) :
+    old_session = sql_db.query(ChatSession).filter(ChatSession.session_id == session_id).first()
 
+    if old_session :
+        old_session.updated_at = datetime.now(timezone.utc)
 
+    sql_db.commit()
 
 
 

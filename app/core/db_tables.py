@@ -1,6 +1,6 @@
 from app.core.database import Base
 from sqlalchemy import Column ,Integer ,String ,DateTime ,Boolean ,Text
-from datetime import datetime
+from datetime import datetime ,timezone 
 
 # 定义表的格式
 class ChatMessages(Base):
@@ -11,7 +11,7 @@ class ChatMessages(Base):
     session_id = Column(String(50) ,nullable=False)
     role = Column(String(100) ,nullable=False)
     content = Column(Text ,nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # __tablename__ = 这张表叫什么
     # unique=True = 不能重复
@@ -24,5 +24,5 @@ class ChatSession(Base):
     id = Column(Integer ,primary_key=True ,index=True)
     session_id = Column(String(50) ,nullable=False)
     title = Column(String(100) ,nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc),nullable=False)

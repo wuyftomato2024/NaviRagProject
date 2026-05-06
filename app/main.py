@@ -11,6 +11,7 @@ from app.repositories.chat_repository import sessionCreate ,sessionGet ,sessionI
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import uuid
 
 # 创建 FastAPI 应用
 app = FastAPI()
@@ -74,7 +75,16 @@ async def error(request,exc :Exception):
     )
 
 # *****
-# ragChat接口
+# Chat接口
+# *****
+@app.post("/sessionID")
+def sessionIdCreated():
+    session_id = str(uuid.uuid4())
+
+    return session_id
+
+# *****
+# Chat接口
 # *****
 @app.post("/chat" ,response_model=ApiResponse)
 async def chat(
@@ -93,6 +103,7 @@ async def chat(
     load_dotenv(BASE_DIR / "configuration.env")
     openai_api_key = os.getenv("OPENAI_API_KEY")
     
+    # 按照session id来判断 是否第一次记录此会话
     session_result = sessionIdGet(sql_db = sql_db ,session_id = session_id )
     if session_result is None or not session_result:
         title = question[:20]
@@ -138,8 +149,5 @@ def getChat(session_id :str , sql_db = Depends(get_db)):
 @app.get("/chat/session")
 def getSession(sql_db = Depends(get_db)):
     response = sessionGet(sql_db)
-    
-    # if not response: 
-    #     response = None
 
     return response
