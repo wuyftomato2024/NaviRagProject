@@ -1,3 +1,7 @@
+import os
+import uuid
+from pathlib import Path
+from dotenv import load_dotenv
 from fastapi import FastAPI, UploadFile, File, Form ,HTTPException ,Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,10 +12,7 @@ from app.core.database import engine ,Base ,SessionLocal
 from app.core.dataFormat_change import sql_message_process
 from app.schemas.model import ApiResponse
 from app.repositories.chat_repository import sessionCreate ,sessionGet ,sessionIdGet
-import os
-from pathlib import Path
-from dotenv import load_dotenv
-import uuid
+from app.services.auth_service import register ,login
 
 # 创建 FastAPI 应用
 app = FastAPI()
@@ -75,7 +76,7 @@ async def error(request,exc :Exception):
     )
 
 # *****
-# Chat接口
+# 生成uuid
 # *****
 @app.post("/sessionID")
 def sessionIdCreated():
@@ -142,12 +143,36 @@ def getChat(session_id :str , sql_db = Depends(get_db)):
 
     return message_list
 
-
 # *****
 # 左侧side bar消息列表获取
 # *****
 @app.get("/chat/session")
 def getSession(sql_db = Depends(get_db)):
     response = sessionGet(sql_db)
+
+    return response
+
+# *****
+# 注册
+# *****
+@app.post("/register")
+def userCreate(
+    user_name :str = Form(...) ,
+    password : str = Form(...) ,
+    sql_db = Depends(get_db)
+    ):
+   response = register(sql_db ,user_name ,password)
+   return response
+
+# *****
+# 登录
+# *****
+@app.post("/login")
+def userLogin(
+    user_name :str = Form(...) ,
+    password : str = Form(...) ,
+    sql_db = Depends(get_db)
+    ):
+    response = login(sql_db ,user_name ,password)
 
     return response

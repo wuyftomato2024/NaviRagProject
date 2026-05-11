@@ -26,3 +26,12 @@ class ChatSession(Base):
     title = Column(String(100) ,nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc),nullable=False)
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer ,primary_key=True ,index=True)
+    user_name = Column(String(50) ,unique=True ,nullable=False ,index=True)
+    hashed_password = Column(String(255) ,nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    

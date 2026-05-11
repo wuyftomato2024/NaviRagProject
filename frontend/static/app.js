@@ -19,30 +19,14 @@ const noticeBox = document.getElementById("notice-box");
 const errorBox = document.getElementById("error-box");
 
 const API_BASE_URL = "http://127.0.0.1:8000";
-const SESSION_STORAGE_KEY = "navi_rag_session_id";
 const DEFAULT_NOTICE = "Ready. You can send a request or load history.";
+const EMPTY_SESSION_TEXT = "(none)";
 
-let sessionId = getOrCreateSessionId();
+let currentSessionId = null;
 let sessionListItems = [];
 
-function generateSessionId() {
-  return crypto.randomUUID();
-}
-
-function getOrCreateSessionId() {
-  const savedSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
-  if (savedSessionId) {
-    return savedSessionId;
-  }
-
-  const newSessionId = generateSessionId();
-  localStorage.setItem(SESSION_STORAGE_KEY, newSessionId);
-  return newSessionId;
-}
-
-function saveSessionId(nextSessionId) {
-  sessionId = nextSessionId;
-  localStorage.setItem(SESSION_STORAGE_KEY, nextSessionId);
+function setCurrentSessionId(nextSessionId) {
+  currentSessionId = nextSessionId || null;
   updateStatus();
 }
 
@@ -80,8 +64,9 @@ function clearError() {
 }
 
 function updateStatus() {
-  sessionIdDisplay.textContent = sessionId;
-  statusSession.textContent = `session_id = ${sessionId}`;
+  const displaySessionId = currentSessionId || EMPTY_SESSION_TEXT;
+  sessionIdDisplay.textContent = displaySessionId;
+  statusSession.textContent = `session_id = ${displaySessionId}`;
   statusMode.textContent = `${modelFlagSelect.value} / top_k = ${topKSelect.value}`;
 }
 
@@ -114,7 +99,7 @@ function renderSessionList(items) {
 
   sessionList.innerHTML = sessionListItems
     .map((item) => {
-      const isActive = item.sessionId === sessionId ? " is-active" : "";
+      const isActive = item.sessionId === currentSessionId ? " is-active" : "";
       return `
         <div class="session-row${isActive}" data-session-id="${escapeHtml(item.sessionId)}">
           <button class="session-item" type="button">${escapeHtml(item.title)}</button>
@@ -160,10 +145,6 @@ function validateForm() {
   const files = Array.from(uploadInput.files || []);
   const allowedExtensions = [".txt", ".pdf"];
 
-  if (!sessionId) {
-    return "Session ID was not initialized.";
-  }
-
   if (!question) {
     return "Please enter a question.";
   }
@@ -177,6 +158,31 @@ function validateForm() {
   }
 
   return null;
+}
+
+function resetChatView() {
+  renderChatHistory([]);
+  renderReferences([]);
+  questionInput.value = "";
+  uploadInput.value = "";
+}
+
+async function requestSessionId() {
+  const response = await fetch(`${API_BASE_URL}/sessionID`, {
+    method: "POST",
+  });
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result?.detail || "Failed to create session ID.");
+  }
+
+  const nextSessionId = String(result ?? "").trim();
+  if (!nextSessionId) {
+    throw new Error("Backend returned an empty session ID.");
+  }
+
+  return nextSessionId;
 }
 
 async function loadSessionList() {
@@ -208,18 +214,25 @@ async function selectSession(nextSessionId) {
     return;
   }
 
-  saveSessionId(nextSessionId);
+  setCurrentSessionId(nextSessionId);
   renderSessionList(sessionListItems);
   await loadChatHistory();
 }
 
 async function loadChatHistory() {
+  if (!currentSessionId) {
+    clearError();
+    renderSessionList(sessionListItems);
+    showError("No active session selected.");
+    return;
+  }
+
   clearError();
   updateStatus();
   setLoading(true, "Loading chat history...");
 
   try {
-    const response = await fetch(`${API_BASE_URL}/chat/history/${encodeURIComponent(sessionId)}`);
+    const response = await fetch(`${API_BASE_URL}/chat/history/${encodeURIComponent(currentSessionId)}`);
     const result = await response.json();
 
     if (!response.ok) {
@@ -230,7 +243,7 @@ async function loadChatHistory() {
     renderReferences([]);
     renderSessionList(sessionListItems);
     statusText.textContent = "Success";
-    noticeBox.textContent = `Loaded history for session_id = ${sessionId}.`;
+    noticeBox.textContent = `Loaded history for session_id = ${currentSessionId}.`;
   } catch (error) {
     statusText.textContent = "Error";
     noticeBox.textContent = "Failed to load history. Check the backend service and session_id.";
@@ -251,19 +264,24 @@ async function handleSubmit(event) {
     return;
   }
 
-  const formData = new FormData();
-  formData.append("question", questionInput.value.trim());
-  formData.append("session_id", sessionId);
-  formData.append("model_flag", modelFlagSelect.value);
-  formData.append("top_k", topKSelect.value);
-
-  for (const file of uploadInput.files) {
-    formData.append("upload_file", file);
-  }
-
   setLoading(true);
 
   try {
+    if (!currentSessionId) {
+      const nextSessionId = await requestSessionId();
+      setCurrentSessionId(nextSessionId);
+    }
+
+    const formData = new FormData();
+    formData.append("question", questionInput.value.trim());
+    formData.append("session_id", currentSessionId);
+    formData.append("model_flag", modelFlagSelect.value);
+    formData.append("top_k", topKSelect.value);
+
+    for (const file of uploadInput.files) {
+      formData.append("upload_file", file);
+    }
+
     const response = await fetch(`${API_BASE_URL}/chat`, {
       method: "POST",
       body: formData,
@@ -291,10 +309,16 @@ async function handleSubmit(event) {
 }
 
 async function handleClearSession() {
+  if (!currentSessionId) {
+    clearError();
+    showError("No active session to delete.");
+    return;
+  }
+
   clearError();
   updateStatus();
 
-  const confirmed = window.confirm(`Delete chat history and vector store for session_id = ${sessionId}?`);
+  const confirmed = window.confirm(`Delete chat history and vector store for session_id = ${currentSessionId}?`);
   if (!confirmed) {
     return;
   }
@@ -302,7 +326,7 @@ async function handleClearSession() {
   setLoading(true, "Clearing current session...");
 
   try {
-    const response = await fetch(`${API_BASE_URL}/chat/history/${encodeURIComponent(sessionId)}`, {
+    const response = await fetch(`${API_BASE_URL}/chat/history/${encodeURIComponent(currentSessionId)}`, {
       method: "DELETE",
     });
 
@@ -312,11 +336,10 @@ async function handleClearSession() {
       throw new Error(result.detail || "Delete failed.");
     }
 
-    renderChatHistory([]);
-    renderReferences([]);
+    setCurrentSessionId(null);
+    resetChatView();
+    renderSessionList(sessionListItems);
     await loadSessionList();
-    questionInput.value = "";
-    uploadInput.value = "";
     statusText.textContent = "Success";
     noticeBox.textContent = "Current session was cleared.";
   } catch (error) {
@@ -352,11 +375,9 @@ async function handleDeleteSession(targetSessionId) {
       throw new Error(result.detail || "Delete failed.");
     }
 
-    if (targetSessionId === sessionId) {
-      renderChatHistory([]);
-      renderReferences([]);
-      questionInput.value = "";
-      uploadInput.value = "";
+    if (targetSessionId === currentSessionId) {
+      setCurrentSessionId(null);
+      resetChatView();
     }
 
     await loadSessionList();
@@ -373,14 +394,11 @@ async function handleDeleteSession(targetSessionId) {
 
 function handleNewSession() {
   clearError();
-  saveSessionId(generateSessionId());
-  renderChatHistory([]);
-  renderReferences([]);
+  setCurrentSessionId(null);
+  resetChatView();
   renderSessionList(sessionListItems);
-  questionInput.value = "";
-  uploadInput.value = "";
   statusText.textContent = "Idle";
-  noticeBox.textContent = "New session was created.";
+  noticeBox.textContent = "Started a new session draft.";
 }
 
 chatForm.addEventListener("submit", handleSubmit);

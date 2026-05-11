@@ -1,5 +1,5 @@
 from app.schemas.db_schema import DBResponse
-from app.core.db_tables import ChatMessages ,ChatSession
+from app.core.db_tables import ChatMessages ,ChatSession ,User
 from fastapi import HTTPException
 from langchain_core.messages import AIMessage ,HumanMessage
 from datetime import datetime ,timezone
@@ -129,6 +129,26 @@ def refreshSessionTime(sql_db ,session_id) :
 
     sql_db.commit()
 
+# *****
+# 用户注册，写入user表
+# *****
+def userCreate(sql_db , user_name ,hashed_password):
+    print ("A")
+    new_user = User(
+        user_name = user_name ,
+        hashed_password = hashed_password
+    )
+    
+    sql_db.add(new_user)
+    sql_db.commit()
+
+# *****
+# 检查user名是否重名
+# *****
+def userCheck(sql_db , user_name):
+    old_user = sql_db.query(User).filter(User.user_name ==user_name).first()
+
+    return old_user
 
 
 
