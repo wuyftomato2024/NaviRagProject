@@ -17,7 +17,7 @@ def chunk_hit(chunk_texts):
 # 功能 确定文件来源
 # 职责 命中文件来源llm
 # *****
-def chunk_hit_llm(question ,chunk_texts ,sql_db ,session_id ,openai_api_key ,model_flag):
+def chunk_hit_llm(question ,chunk_texts ,sql_db ,session_id ,openai_api_key ,model_flag ,user_id):
     ai_text_all = chunk_hit(chunk_texts)
 
     ai_model ,_ =ai_model_select(model_flag ,openai_api_key)
