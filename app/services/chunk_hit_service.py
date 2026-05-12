@@ -25,7 +25,7 @@ def chunk_hit_llm(question ,chunk_texts ,sql_db ,session_id ,openai_api_key ,mod
 
     prompt = chunk_hit_prompt()
     
-    history_list = chatHistoryGet(sql_db = sql_db,session_id = session_id)
+    history_list = chatHistoryGet(sql_db = sql_db,session_id = session_id ,user_id = user_id)
 
     result_history = history_list[-4:]
 

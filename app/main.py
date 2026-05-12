@@ -13,6 +13,7 @@ from app.core.dataFormat_change import sql_message_process
 from app.schemas.model import ApiResponse
 from app.repositories.chat_repository import sessionCreate ,sessionGet ,sessionIdGet
 from app.services.auth_service import register ,login
+from app.core.security import get_current_user
 
 # 创建 FastAPI 应用
 app = FastAPI()
@@ -97,8 +98,13 @@ async def chat(
     top_k :int = Form(3,ge=1,le=3),
     session_id :str = Form(...) ,
     sql_db = Depends(get_db) ,
-    model_flag: str = Form("openai")
+    model_flag: str = Form("openai") ,
+    current_user = Depends(get_current_user)
 ):
+    
+    user_id = current_user["user_id"]
+    print(user_id)
+
     # ①__file__：当前这个 .py 文件的位置 ②Path(__file__)：把它变成路径对象 ③.resolve()：转成完整绝对路径 ④.parents[1]：往上退两层目录
     BASE_DIR = Path(__file__).resolve().parents[1]
     load_dotenv(BASE_DIR / "configuration.env")
@@ -108,7 +114,7 @@ async def chat(
     session_result = sessionIdGet(sql_db = sql_db ,session_id = session_id )
     if session_result is None or not session_result:
         title = question[:20]
-        sessionCreate(sql_db = sql_db ,session_id = session_id , title = title)
+        sessionCreate(sql_db = sql_db ,session_id = session_id , title = title ,user_id = user_id)
 
     response = await Chat(
         question = question ,
@@ -117,7 +123,8 @@ async def chat(
         top_k = top_k ,
         session_id = session_id ,
         sql_db = sql_db ,
-        model_flag = model_flag
+        model_flag = model_flag ,
+        user_id = user_id
         )
     return response
 
@@ -125,11 +132,13 @@ async def chat(
 # 聊天历史删除
 # *****
 @app.delete("/chat/history/{session_id}")
-def sessionDelete(session_id :str ,sql_db = Depends(get_db)):
+def sessionDelete(session_id :str ,sql_db = Depends(get_db) ,current_user = Depends(get_current_user)):
+    user_id = current_user["user_id"]
 
     response = sessionDeleteLogic(
         session_id = session_id ,
-        sql_db = sql_db
+        sql_db = sql_db ,
+        user_id = user_id
         )
 
     return response
@@ -138,8 +147,10 @@ def sessionDelete(session_id :str ,sql_db = Depends(get_db)):
 # 根据id获取聊天历史
 # *****
 @app.get("/chat/history/{session_id}")
-def getChat(session_id :str , sql_db = Depends(get_db)):
-    message_list = sql_message_process(sql_db =sql_db, session_id =session_id)
+def getChat(session_id :str , sql_db = Depends(get_db) ,current_user = Depends(get_current_user)):
+    user_id = current_user["user_id"]
+
+    message_list = sql_message_process(sql_db =sql_db, session_id =session_id ,user_id =user_id)
 
     return message_list
 
@@ -147,8 +158,12 @@ def getChat(session_id :str , sql_db = Depends(get_db)):
 # 左侧side bar消息列表获取
 # *****
 @app.get("/chat/session")
-def getSession(sql_db = Depends(get_db)):
-    response = sessionGet(sql_db)
+def getSession(
+    sql_db = Depends(get_db) ,
+    current_user = Depends(get_current_user)
+    ):
+    user_id = current_user["user_id"]
+    response = sessionGet(sql_db ,user_id)
 
     return response
 

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>NaviChat Register</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="auth-page">
+  <main class="auth-shell">
+    <section class="panel auth-panel">
+      <div class="auth-header">
+        <h1>NaviChat</h1>
+        <p>创建一个新账号。</p>
+      </div>
+
+      <form id="register-form" class="auth-form">
+        <div class="field">
+          <label for="register-username">用户名</label>
+          <input id="register-username" name="user_name" type="text" autocomplete="username" required>
+        </div>
+
+        <div class="field">
+          <label for="register-password">密码</label>
+          <input id="register-password" name="password" type="password" autocomplete="new-password" required>
+        </div>
+
+        <button id="register-button" class="btn btn-primary auth-submit" type="submit">注册</button>
+      </form>
+
+      <div id="auth-notice" class="notice-box auth-feedback">注册成功后可直接前往登录。</div>
+      <div id="auth-error" class="error-box auth-feedback hidden"></div>
+
+      <div class="auth-footer">
+        <a class="text-link" href="./index.html">已有账号？去登录</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="./auth.js"></script>
+</body>
+</html>

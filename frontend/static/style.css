@@ -37,6 +37,13 @@ body {
   margin-bottom: 24px;
 }
 
+.hero-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .hero h1 {
   margin: 0 0 8px;
   font-size: 32px;
@@ -47,6 +54,26 @@ body {
   margin: 0;
   color: var(--muted);
   font-size: 15px;
+}
+
+.hero-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.nav-link,
+.text-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.nav-link:hover,
+.text-link:hover {
+  text-decoration: underline;
 }
 
 .layout {
@@ -154,6 +181,84 @@ textarea:focus {
   background: var(--panel-soft);
   border-radius: 12px;
   padding: 14px;
+}
+
+.auth-status {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-soft);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.auth-actions {
+  margin-top: 8px;
+}
+
+.btn-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.auth-shell {
+  width: 100%;
+  max-width: 420px;
+}
+
+.auth-panel {
+  padding: 28px 24px;
+}
+
+.auth-header {
+  margin-bottom: 22px;
+}
+
+.auth-header h1 {
+  margin: 0 0 8px;
+  font-size: 30px;
+}
+
+.auth-header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-submit {
+  width: 100%;
+}
+
+.auth-feedback {
+  margin-top: 16px;
+}
+
+.auth-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  flex-wrap: wrap;
 }
 
 .session-id-display {
@@ -434,6 +539,10 @@ textarea:focus {
   .status-item {
     min-width: calc(50% - 6px);
   }
+
+  .hero-row {
+    flex-direction: column;
+  }
 }
 
 @media (max-width: 640px) {
@@ -469,6 +578,10 @@ textarea:focus {
   }
 
   .session-button-row {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-actions {
     grid-template-columns: 1fr;
   }
 
@@ -512,6 +625,18 @@ textarea:focus {
 
   .reference-list {
     padding-left: 16px;
+  }
+
+  .auth-page {
+    padding: 14px;
+  }
+
+  .auth-panel {
+    padding: 20px 16px;
+  }
+
+  .auth-footer {
+    flex-direction: column;
   }
 }
 

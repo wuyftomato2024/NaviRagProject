@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>NaviChat</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="hero hero-row">
+      <div>
+        <h1>NaviChat</h1>
+        <p>文档问答与会话管理页面。</p>
+      </div>
+
+      <div class="hero-nav">
+        <button id="logout-button" class="btn btn-secondary hero-logout" type="button">退出登录</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="panel sidebar">
+        <section class="section history-panel">
+          <div class="section-heading-row">
+            <h2 class="section-title">历史会话</h2>
+            <button id="refresh-session-button" class="btn-icon" type="button" title="刷新历史会话">↻</button>
+          </div>
+          <div id="session-list" class="session-list">
+            <div class="empty-box">暂无历史会话。</div>
+          </div>
+        </section>
+
+        <form id="chat-form">
+          <section class="section">
+            <h2 class="section-title">会话设置</h2>
+
+            <div class="field">
+              <label>Session ID</label>
+              <div id="session-id-display" class="session-id-display"></div>
+              <div class="hint">首次发送消息时会自动创建新的会话 ID。</div>
+              <div class="session-button-row">
+                <button id="load-history-button" class="btn btn-secondary btn-small" type="button">加载历史</button>
+                <button id="new-session-button" class="btn btn-secondary btn-small" type="button">新建会话</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="model-flag">模型类型</label>
+              <select id="model-flag" name="model_flag">
+                <option value="openai" selected>openai</option>
+                <option value="ollama">ollama</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="top-k">Top K</label>
+              <select id="top-k" name="top_k">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+              </select>
+              <div class="hint">检索返回的参考片段数量，范围为 1 到 3。</div>
+            </div>
+          </section>
+
+          <section class="section">
+            <h2 class="section-title">知识文件</h2>
+
+            <div class="file-box">
+              <div class="field">
+                <label for="upload-file">上传知识文件</label>
+                <input id="upload-file" name="upload_file" type="file" accept=".txt,.pdf" multiple>
+              </div>
+              <div class="hint">支持 `txt` 和 `pdf`，文件会随当前会话一起参与问答。</div>
+            </div>
+          </section>
+
+          <section class="section">
+            <h2 class="section-title">提问</h2>
+
+            <div class="field">
+              <label for="question">问题内容</label>
+              <textarea id="question" name="question" placeholder="请输入你的问题，例如：帮我总结这份文档的重点内容" required></textarea>
+            </div>
+
+            <div class="button-row">
+              <button id="send-button" class="btn btn-primary" type="submit">发送</button>
+              <button id="clear-button" class="btn btn-danger" type="button">删除当前会话</button>
+            </div>
+          </section>
+        </form>
+      </aside>
+
+      <section class="panel content">
+        <div class="status-bar">
+          <div class="status-item">
+            <span class="status-label">运行状态</span>
+            <span id="status-text" class="status-value">Idle</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">当前会话</span>
+            <span id="status-session" class="status-value"></span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">当前模式</span>
+            <span id="status-mode" class="status-value">openai / top_k = 3</span>
+          </div>
+        </div>
+
+        <section class="section">
+          <h2 class="section-title">聊天记录</h2>
+          <div id="chat-list" class="chat-list empty-state">
+            <div class="empty-box">还没有聊天记录，发送问题后会显示在这里。</div>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">参考片段</h2>
+          <div id="reference-box" class="reference-box">
+            <div class="empty-box">本次回答返回的参考片段会显示在这里。</div>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">状态提示</h2>
+          <div id="notice-box" class="notice-box">页面已就绪。</div>
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">错误信息</h2>
+          <div id="error-box" class="error-box hidden"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

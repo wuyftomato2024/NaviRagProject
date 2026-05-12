@@ -1,4 +1,5 @@
 const chatForm = document.getElementById("chat-form");
+const logoutButton = document.getElementById("logout-button");
 const modelFlagSelect = document.getElementById("model-flag");
 const topKSelect = document.getElementById("top-k");
 const questionInput = document.getElementById("question");
@@ -21,9 +22,13 @@ const errorBox = document.getElementById("error-box");
 const API_BASE_URL = "http://127.0.0.1:8000";
 const DEFAULT_NOTICE = "Ready. You can send a request or load history.";
 const EMPTY_SESSION_TEXT = "(none)";
+const ACCESS_TOKEN_KEY = "navichat_access_token";
+const LOGIN_PAGE_URL = "./index.html";
+const LOGGED_OUT_NOTICE = "请先登录，然后再使用聊天功能。";
 
 let currentSessionId = null;
 let sessionListItems = [];
+let accessToken = window.localStorage.getItem(ACCESS_TOKEN_KEY) || "";
 
 function setCurrentSessionId(nextSessionId) {
   currentSessionId = nextSessionId || null;
@@ -39,12 +44,32 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function hasAccessToken() {
+  return Boolean(accessToken);
+}
+
+function clearStoredAccessToken() {
+  accessToken = "";
+  window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+}
+
+function buildAuthHeaders() {
+  if (!hasAccessToken()) {
+    return {};
+  }
+
+  return {
+    Authorization: `Bearer ${accessToken}`,
+  };
+}
+
 function setControlsDisabled(isDisabled) {
   sendButton.disabled = isDisabled;
   clearButton.disabled = isDisabled;
   loadHistoryButton.disabled = isDisabled;
   newSessionButton.disabled = isDisabled;
   refreshSessionButton.disabled = isDisabled;
+  logoutButton.disabled = isDisabled;
 }
 
 function setLoading(isLoading, message = "Thinking...") {
@@ -93,7 +118,7 @@ function renderSessionList(items) {
     : [];
 
   if (sessionListItems.length === 0) {
-    sessionList.innerHTML = '<div class="empty-box">No historical sessions.</div>';
+    sessionList.innerHTML = '<div class="empty-box">暂无历史会话。</div>';
     return;
   }
 
@@ -112,7 +137,7 @@ function renderSessionList(items) {
 
 function renderChatHistory(chatHistory) {
   if (!Array.isArray(chatHistory) || chatHistory.length === 0) {
-    chatList.innerHTML = '<div class="empty-box">No chat history for this session.</div>';
+    chatList.innerHTML = '<div class="empty-box">当前会话还没有聊天记录。</div>';
     chatList.classList.add("empty-state");
     return;
   }
@@ -132,7 +157,7 @@ function renderChatHistory(chatHistory) {
 
 function renderReferences(tagList) {
   if (!Array.isArray(tagList) || tagList.length === 0) {
-    referenceBox.innerHTML = '<div class="empty-box">No reference chunks returned for this response.</div>';
+    referenceBox.innerHTML = '<div class="empty-box">当前回答没有返回参考片段。</div>';
     return;
   }
 
@@ -140,10 +165,40 @@ function renderReferences(tagList) {
   referenceBox.innerHTML = `<ol class="reference-list">${html}</ol>`;
 }
 
+function resetChatView() {
+  renderChatHistory([]);
+  renderReferences([]);
+  questionInput.value = "";
+  uploadInput.value = "";
+}
+
+function renderLoggedOutState() {
+  renderSessionList([]);
+  resetChatView();
+  clearError();
+  statusText.textContent = "Idle";
+  noticeBox.textContent = LOGGED_OUT_NOTICE;
+}
+
+function ensureAuthenticated() {
+  if (hasAccessToken()) {
+    return true;
+  }
+
+  clearError();
+  showError("当前未登录，请先前往登录页面。");
+  noticeBox.textContent = LOGGED_OUT_NOTICE;
+  return false;
+}
+
 function validateForm() {
   const question = questionInput.value.trim();
   const files = Array.from(uploadInput.files || []);
   const allowedExtensions = [".txt", ".pdf"];
+
+  if (!ensureAuthenticated()) {
+    return "Please login before sending a chat request.";
+  }
 
   if (!question) {
     return "Please enter a question.";
@@ -160,16 +215,10 @@ function validateForm() {
   return null;
 }
 
-function resetChatView() {
-  renderChatHistory([]);
-  renderReferences([]);
-  questionInput.value = "";
-  uploadInput.value = "";
-}
-
 async function requestSessionId() {
   const response = await fetch(`${API_BASE_URL}/sessionID`, {
     method: "POST",
+    headers: buildAuthHeaders(),
   });
   const result = await response.json();
 
@@ -186,11 +235,18 @@ async function requestSessionId() {
 }
 
 async function loadSessionList() {
+  if (!ensureAuthenticated()) {
+    renderLoggedOutState();
+    return;
+  }
+
   clearError();
   setLoading(true, "Loading session list...");
 
   try {
-    const response = await fetch(`${API_BASE_URL}/chat/session`);
+    const response = await fetch(`${API_BASE_URL}/chat/session`, {
+      headers: buildAuthHeaders(),
+    });
     const result = await response.json();
 
     if (!response.ok) {
@@ -210,7 +266,7 @@ async function loadSessionList() {
 }
 
 async function selectSession(nextSessionId) {
-  if (!nextSessionId) {
+  if (!nextSessionId || !ensureAuthenticated()) {
     return;
   }
 
@@ -220,6 +276,11 @@ async function selectSession(nextSessionId) {
 }
 
 async function loadChatHistory() {
+  if (!ensureAuthenticated()) {
+    renderLoggedOutState();
+    return;
+  }
+
   if (!currentSessionId) {
     clearError();
     renderSessionList(sessionListItems);
@@ -232,7 +293,9 @@ async function loadChatHistory() {
   setLoading(true, "Loading chat history...");
 
   try {
-    const response = await fetch(`${API_BASE_URL}/chat/history/${encodeURIComponent(currentSessionId)}`);
+    const response = await fetch(`${API_BASE_URL}/chat/history/${encodeURIComponent(currentSessionId)}`, {
+      headers: buildAuthHeaders(),
+    });
     const result = await response.json();
 
     if (!response.ok) {
@@ -284,6 +347,7 @@ async function handleSubmit(event) {
 
     const response = await fetch(`${API_BASE_URL}/chat`, {
       method: "POST",
+      headers: buildAuthHeaders(),
       body: formData,
     });
 
@@ -309,6 +373,11 @@ async function handleSubmit(event) {
 }
 
 async function handleClearSession() {
+  if (!ensureAuthenticated()) {
+    renderLoggedOutState();
+    return;
+  }
+
   if (!currentSessionId) {
     clearError();
     showError("No active session to delete.");
@@ -328,6 +397,7 @@ async function handleClearSession() {
   try {
     const response = await fetch(`${API_BASE_URL}/chat/history/${encodeURIComponent(currentSessionId)}`, {
       method: "DELETE",
+      headers: buildAuthHeaders(),
     });
 
     const result = await response.json();
@@ -352,7 +422,7 @@ async function handleClearSession() {
 }
 
 async function handleDeleteSession(targetSessionId) {
-  if (!targetSessionId) {
+  if (!targetSessionId || !ensureAuthenticated()) {
     return;
   }
 
@@ -367,6 +437,7 @@ async function handleDeleteSession(targetSessionId) {
   try {
     const response = await fetch(`${API_BASE_URL}/chat/history/${encodeURIComponent(targetSessionId)}`, {
       method: "DELETE",
+      headers: buildAuthHeaders(),
     });
 
     const result = await response.json();
@@ -393,6 +464,11 @@ async function handleDeleteSession(targetSessionId) {
 }
 
 function handleNewSession() {
+  if (!ensureAuthenticated()) {
+    renderLoggedOutState();
+    return;
+  }
+
   clearError();
   setCurrentSessionId(null);
   resetChatView();
@@ -401,11 +477,18 @@ function handleNewSession() {
   noticeBox.textContent = "Started a new session draft.";
 }
 
+function handleLogout() {
+  clearStoredAccessToken();
+  setCurrentSessionId(null);
+  window.location.href = LOGIN_PAGE_URL;
+}
+
 chatForm.addEventListener("submit", handleSubmit);
 clearButton.addEventListener("click", handleClearSession);
 loadHistoryButton.addEventListener("click", loadChatHistory);
 newSessionButton.addEventListener("click", handleNewSession);
 refreshSessionButton.addEventListener("click", loadSessionList);
+logoutButton.addEventListener("click", handleLogout);
 sessionList.addEventListener("click", (event) => {
   const deleteButton = event.target.closest(".session-delete");
   if (deleteButton) {
@@ -427,4 +510,9 @@ topKSelect.addEventListener("change", updateStatus);
 
 updateStatus();
 renderReferences([]);
-loadSessionList();
+
+if (hasAccessToken()) {
+  loadSessionList();
+} else {
+  renderLoggedOutState();
+}

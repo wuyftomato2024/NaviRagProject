@@ -4,7 +4,7 @@ from app.services.rag_service import ragChat
 from app.services.judge_service import judge
 import os
 
-async def Chat(model_flag ,openai_api_key ,upload_file ,question ,top_k ,sql_db ,session_id):
+async def Chat(model_flag ,openai_api_key ,upload_file ,question ,top_k ,sql_db ,session_id ,user_id):
 
     vector_db_path = f"faiss_db/{session_id}/"
     vector_db_flag = os.path.exists(vector_db_path)
@@ -21,7 +21,8 @@ async def Chat(model_flag ,openai_api_key ,upload_file ,question ,top_k ,sql_db 
             top_k = top_k ,
             sql_db = sql_db ,
             session_id = session_id ,
-            model_flag = model_flag
+            model_flag = model_flag ,
+            user_id  = user_id
             )
     
     elif not upload_file and vector_db_flag :
@@ -38,7 +39,8 @@ async def Chat(model_flag ,openai_api_key ,upload_file ,question ,top_k ,sql_db 
                 top_k = top_k ,
                 sql_db = sql_db ,
                 session_id = session_id ,
-                model_flag = model_flag
+                model_flag = model_flag ,
+                user_id  = user_id
                 )
                 print("not in judge and rag")
                 judge_flag = False
@@ -52,7 +54,8 @@ async def Chat(model_flag ,openai_api_key ,upload_file ,question ,top_k ,sql_db 
                 openai_api_key = openai_api_key ,
                 sql_db = sql_db ,
                 session_id = session_id ,
-                model_flag = model_flag
+                model_flag = model_flag ,
+                user_id  = user_id
                 )
                 print("not in judge and normal")
                 judge_flag = False
@@ -65,7 +68,8 @@ async def Chat(model_flag ,openai_api_key ,upload_file ,question ,top_k ,sql_db 
                 openai_api_key = openai_api_key ,
                 sql_db = sql_db ,
                 session_id = session_id ,
-                model_flag = model_flag
+                model_flag = model_flag ,
+                user_id = user_id
             ).strip().lower()
 
             if judge_response == "rag" :
@@ -76,7 +80,8 @@ async def Chat(model_flag ,openai_api_key ,upload_file ,question ,top_k ,sql_db 
                 top_k = top_k ,
                 sql_db = sql_db ,
                 session_id = session_id ,
-                model_flag = model_flag
+                model_flag = model_flag ,
+                user_id  = user_id
                 )
 
                 print("judge rag success")
@@ -87,7 +92,8 @@ async def Chat(model_flag ,openai_api_key ,upload_file ,question ,top_k ,sql_db 
                 openai_api_key = openai_api_key ,
                 sql_db = sql_db ,
                 session_id = session_id,
-                model_flag = model_flag
+                model_flag = model_flag ,
+                user_id  = user_id
                 )
                 print("judge history success")
 
@@ -97,7 +103,8 @@ async def Chat(model_flag ,openai_api_key ,upload_file ,question ,top_k ,sql_db 
                 openai_api_key = openai_api_key ,
                 sql_db = sql_db ,
                 session_id = session_id,
-                model_flag = model_flag
+                model_flag = model_flag ,
+                user_id  = user_id
                 )
                 print("judge normal success")
 
@@ -107,7 +114,8 @@ async def Chat(model_flag ,openai_api_key ,upload_file ,question ,top_k ,sql_db 
                 openai_api_key = openai_api_key ,
                 sql_db = sql_db ,
                 session_id = session_id ,
-                model_flag = model_flag
+                model_flag = model_flag ,
+                user_id  = user_id
                 )
                 print("judge normal success")
 
@@ -117,7 +125,8 @@ async def Chat(model_flag ,openai_api_key ,upload_file ,question ,top_k ,sql_db 
         openai_api_key = openai_api_key ,
         sql_db = sql_db ,
         session_id = session_id ,
-        model_flag = model_flag
+        model_flag = model_flag ,
+        user_id = user_id
         )
     
     return response

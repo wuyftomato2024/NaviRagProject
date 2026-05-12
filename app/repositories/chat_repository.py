@@ -7,10 +7,11 @@ from datetime import datetime ,timezone
 # *****
 # 登记聊天记录
 # *****
-def chatCreate(sql_db , session_id ,role , content):
+def chatCreate(sql_db , session_id ,role , content ,user_id):
 
     newChat = ChatMessages(
         session_id = session_id ,
+        user_id = user_id ,
         role =  role ,
         content = content
     )
@@ -34,10 +35,10 @@ def chatCreate(sql_db , session_id ,role , content):
 # *****
 # 获取聊天记录
 # *****
-def chatHistoryGet(sql_db ,session_id):
+def chatHistoryGet(sql_db ,session_id ,user_id):
     chatHistory_map = []
 
-    chatHistorys = sql_db.query(ChatMessages).filter(ChatMessages.session_id == session_id).all()
+    chatHistorys = sql_db.query(ChatMessages).filter(ChatMessages.session_id == session_id ,ChatMessages.user_id == user_id).all()
 
     if chatHistorys is None:
         raise HTTPException(status_code= 400 ,detail="chatHistory is None")
@@ -53,8 +54,8 @@ def chatHistoryGet(sql_db ,session_id):
 # *****
 # 删除聊天记录
 # *****
-def chatDelete(sql_db ,session_id):
-    chatHistorys = sql_db.query(ChatMessages).filter(ChatMessages.session_id == session_id).all()
+def chatDelete(sql_db ,session_id ,user_id):
+    chatHistorys = sql_db.query(ChatMessages).filter(ChatMessages.session_id == session_id ,ChatMessages.user_id == user_id).all()
 
     if not chatHistorys :
         raise HTTPException(status_code=404 ,detail="chatMessage in None")
@@ -74,12 +75,13 @@ def chatDelete(sql_db ,session_id):
     )
   
 # *****
-# 登录历史会话
+# 登录历史会话标题
 # *****
-def sessionCreate(sql_db ,session_id ,title):
+def sessionCreate(sql_db ,session_id ,title ,user_id):
     new_session =ChatSession(
         session_id = session_id ,
-        title = title
+        title = title ,
+        user_id = user_id
     )
 
     sql_db.add(new_session)
@@ -88,10 +90,10 @@ def sessionCreate(sql_db ,session_id ,title):
     return {"status" : "ok"}
 
 # *****
-# 获取历史会话
+# 获取历史会话标题
 # *****
-def sessionGet(sql_db):
-    chatsessions = sql_db.query(ChatSession).order_by(ChatSession.updated_at.desc()).all()
+def sessionGet(sql_db ,user_id):
+    chatsessions = sql_db.query(ChatSession).filter(ChatSession.user_id == user_id).order_by(ChatSession.updated_at.desc()).all()
 
     if not chatsessions :
         chatsessions_map = []
@@ -109,20 +111,20 @@ def sessionIdGet(sql_db ,session_id):
     return chatsessions
 
 # *****
-# 删除历史会话
+# 删除历史会话标题
 # *****
-def sessionDelete(sql_db ,session_id):
-    old_session = sql_db.query(ChatSession).filter(ChatSession.session_id == session_id).first()
+def sessionDelete(sql_db ,session_id ,user_id):
+    old_session = sql_db.query(ChatSession).filter(ChatSession.session_id == session_id ,ChatSession.user_id == user_id).first()
 
     if old_session :
         sql_db.delete(old_session)
         sql_db.commit()
 
 # *****
-# 更新历史会话时间
+# 更新历史会话标题时间
 # *****
-def refreshSessionTime(sql_db ,session_id) :
-    old_session = sql_db.query(ChatSession).filter(ChatSession.session_id == session_id).first()
+def refreshSessionTime(sql_db ,session_id ,user_id) :
+    old_session = sql_db.query(ChatSession).filter(ChatSession.session_id == session_id ,ChatSession.user_id == user_id).first()
 
     if old_session :
         old_session.updated_at = datetime.now(timezone.utc)

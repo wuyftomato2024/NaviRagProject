@@ -26,6 +26,7 @@ def register(sql_db ,user_name ,password):
 # *****
 def login(sql_db ,user_name ,password):
     user = userCheck(sql_db ,user_name)
+    print (user.id)
 
     if not user :
         raise HTTPException(status_code=404 ,detail="user is not existence")
@@ -33,7 +34,9 @@ def login(sql_db ,user_name ,password):
     # 先检测密码的哈希是否匹配
     if verify_password(password, user.hashed_password):
         # 匹配成功发行jwt token
-        token = access_token_create({"user_name" : user.user_name})
+        token = access_token_create(
+            {"user_name" : user.user_name ,"user_id" : user.id}
+            )
     else :
         raise HTTPException(status_code=400 , detail="password is worng")
     

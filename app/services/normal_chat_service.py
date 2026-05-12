@@ -5,22 +5,22 @@ from app.core.dataFormat_change import sql_message_process
 from app.repositories.chat_repository import chatHistoryGet ,chatCreate ,refreshSessionTime
 from app.schemas.model import ApiResponse ,ChatResponse
 
-def normalChat(question ,openai_api_key ,sql_db ,session_id ,model_flag):
+def normalChat(question ,openai_api_key ,sql_db ,session_id ,model_flag ,user_id):
     ai_model ,_ =ai_model_select(model_flag ,openai_api_key)
     model = ai_model
 
     qa_prompt = answer_model(question)
 
-    sql_messages = chatHistoryGet(sql_db = sql_db ,session_id = session_id)
+    sql_messages = chatHistoryGet(sql_db = sql_db ,session_id = session_id ,user_id =user_id)
     messages = [SystemMessage(content = qa_prompt)] + sql_messages + [HumanMessage(content = question)]
    
     response = model.invoke(messages)
 
-    chatCreate(sql_db = sql_db,session_id =session_id,role = "HumanMessage",content = question)
-    chatCreate(sql_db = sql_db,session_id =session_id,role = "AIMessage",content = response.content)
-    refreshSessionTime(sql_db = sql_db,session_id =session_id)
+    chatCreate(sql_db = sql_db,session_id =session_id,role = "HumanMessage",content = question ,user_id = user_id)
+    chatCreate(sql_db = sql_db,session_id =session_id,role = "AIMessage",content = response.content ,user_id =user_id)
+    refreshSessionTime(sql_db = sql_db,session_id =session_id ,user_id = user_id)
 
-    message_list = sql_message_process(sql_db =sql_db, session_id =session_id)
+    message_list = sql_message_process(sql_db =sql_db, session_id =session_id ,user_id =user_id)
 
     return ApiResponse(
         status = "ok",

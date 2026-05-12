@@ -1,6 +1,8 @@
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 from jose import jwt
+from fastapi import HTTPException ,Depends
+from fastapi.security import OAuth2PasswordBearer
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -13,6 +15,8 @@ SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 ALGORITHM = os.getenv("JWT_ALGORITHM")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 # *****
 # 密码哈希化
@@ -38,3 +42,32 @@ def access_token_create(data :dict):
     token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
 
     return token
+
+# *****
+# 验证jwt token
+# *****
+def check_accsess_token(token):
+    try :
+        token_restore = jwt.decode(token ,SECRET_KEY ,algorithms=[ALGORITHM])
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=401, detail="Invalid token")
+    user_name = token_restore.get("user_name")
+    user_id = token_restore.get("user_id")
+
+    print(user_name)
+    print(user_id)
+
+    if user_name is None :
+        raise HTTPException(status_code=401 ,detail="Invalid token")
+    
+    return {
+        "user_name" : user_name ,
+        "user_id" : user_id
+        }
+
+# *****
+# 从header获取token，并且验证jwt token 返回user_name
+# *****
+def get_current_user(token = Depends(oauth2_scheme)):
+    return check_accsess_token(token)

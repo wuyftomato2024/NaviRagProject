@@ -12,7 +12,7 @@ from app.services.chunk_hit_service import chunk_hit_llm
 from app.repositories.chat_repository import chatHistoryGet ,chatCreate
 from app.schemas.model import ApiResponse ,ChatResponse
 
-async def ragChat(question , upload_file ,openai_api_key ,top_k ,sql_db ,session_id ,model_flag):
+async def ragChat(question , upload_file ,openai_api_key ,top_k ,sql_db ,session_id ,model_flag ,user_id):
     ai_model ,ai_embedding =ai_model_select(model_flag ,openai_api_key)
 
     # 嵌入模型  把每个文本块转成向量（变成数字）
@@ -44,7 +44,7 @@ async def ragChat(question , upload_file ,openai_api_key ,top_k ,sql_db ,session
     
     qa_prompt = answer_model(question)
 
-    sql_messages = chatHistoryGet(sql_db = sql_db ,session_id = session_id)
+    sql_messages = chatHistoryGet(sql_db = sql_db ,session_id = session_id ,user_id = user_id)
 
     human_text = f"Context:\n{chunk_content_text}\n\nQuestion:\n{question}"
 
@@ -64,12 +64,12 @@ async def ragChat(question , upload_file ,openai_api_key ,top_k ,sql_db ,session
                 summary_answer_response = summary_answer(openai_api_key ,vector_db ,top_k ,question ,model_flag)
                 result = summary_answer_response
 
-    chatCreate(sql_db =sql_db, session_id =session_id,role = "HumanMessage" , content = question)
-    chatCreate(sql_db =sql_db, session_id =session_id,role = "AIMessage" , content = result)
+    chatCreate(sql_db =sql_db, session_id =session_id,role = "HumanMessage" , content = question ,user_id = user_id)
+    chatCreate(sql_db =sql_db, session_id =session_id,role = "AIMessage" , content = result ,user_id = user_id)
 
-    chunk_hit = chunk_hit_llm(question ,chunk_texts ,sql_db ,session_id ,openai_api_key ,model_flag)
+    chunk_hit = chunk_hit_llm(question ,chunk_texts ,sql_db ,session_id ,openai_api_key ,model_flag ,user_id)
 
-    message_list = sql_message_process(sql_db =sql_db, session_id =session_id)
+    message_list = sql_message_process(sql_db =sql_db, session_id =session_id ,user_id = user_id)
     
     source_files = [chunk_hit]
     

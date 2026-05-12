@@ -9,6 +9,7 @@ class ChatMessages(Base):
     # 数字类型(int)配合主key，会自动分配数字
     id = Column(Integer ,primary_key=True ,index=True)
     session_id = Column(String(50) ,nullable=False)
+    user_id = Column(Integer ,nullable=False)
     role = Column(String(100) ,nullable=False)
     content = Column(Text ,nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
@@ -23,6 +24,7 @@ class ChatSession(Base):
     # 数字类型(int)配合主key，会自动分配数字
     id = Column(Integer ,primary_key=True ,index=True)
     session_id = Column(String(50) ,nullable=False)
+    user_id = Column(Integer ,nullable=False)
     title = Column(String(100) ,nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc),nullable=False)

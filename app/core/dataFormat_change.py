@@ -5,8 +5,8 @@ from app.schemas.model import HistoryItem
 # *****
 # 前端输出转换
 # *****    
-def sql_message_process(sql_db ,session_id):
-    sql_messages = chatHistoryGet(sql_db = sql_db,session_id = session_id)
+def sql_message_process(sql_db ,session_id ,user_id):
+    sql_messages = chatHistoryGet(sql_db = sql_db,session_id = session_id ,user_id =user_id)
 
     message_list = []
 
