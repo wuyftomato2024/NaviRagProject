@@ -48,7 +48,8 @@ def build_qa_prompt(question):
     return qa_prompt
 
 # *****
-# 定义判定chat模式提示词模板函数
+# 功能 定义判定chat回答模式提示词模板函数
+# 说明
 # *****
 def judge_prompt():
     prompt = ChatPromptTemplate.from_messages([
@@ -127,7 +128,8 @@ def chunk_hit_prompt():
     return prompt
 
 # *****
-# 判断「概括/总结整份上传文件的整体内容」模板
+# 功能判断「概括/总结整份上传文件的整体内容」模板
+# 说明
 # *****
 def summary_prompt():
     prompt = ChatPromptTemplate.from_messages([
@@ -197,6 +199,10 @@ def summary_answer_prompt():
     
     return prompt
 
+# *****
+# 功能 简单回答风格
+# 说明
+# *****
 def simple_normalChat():
     simple_system_message = """Please answer concisely and clearly.
                                 Only answer the main point.
@@ -205,6 +211,10 @@ def simple_normalChat():
                                 Instead, say that the context does not clearly mention it."""    
     return simple_system_message
 
+# *****
+# 功能 普通回答风格
+# 说明
+# *****
 def defult_normalChat():
     normal_system_message = """ 清楚回答问题
                             可适当说明

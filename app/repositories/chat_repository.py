@@ -5,7 +5,8 @@ from langchain_core.messages import AIMessage ,HumanMessage
 from datetime import datetime ,timezone
 
 # *****
-# 登记聊天记录
+# 功能 写入聊天记录
+# 说明
 # *****
 def chatCreate(sql_db , session_id ,role , content ,user_id):
 
@@ -33,7 +34,8 @@ def chatCreate(sql_db , session_id ,role , content ,user_id):
     )
 
 # *****
-# 获取聊天记录
+# 功能 获取历史聊天记录
+# 说明
 # *****
 def chatHistoryGet(sql_db ,session_id ,user_id):
     chatHistory_map = []
@@ -52,7 +54,8 @@ def chatHistoryGet(sql_db ,session_id ,user_id):
     return chatHistory_map
 
 # *****
-# 删除聊天记录
+# 功能删除聊天记录
+# 说明
 # *****
 def chatDelete(sql_db ,session_id ,user_id):
     chatHistorys = sql_db.query(ChatMessages).filter(ChatMessages.session_id == session_id ,ChatMessages.user_id == user_id).all()
@@ -75,7 +78,8 @@ def chatDelete(sql_db ,session_id ,user_id):
     )
   
 # *****
-# 登录历史会话标题
+# 功能 写入历史会话标题
+# 说明
 # *****
 def sessionCreate(sql_db ,session_id ,title ,user_id):
     new_session =ChatSession(
@@ -90,7 +94,8 @@ def sessionCreate(sql_db ,session_id ,title ,user_id):
     return {"status" : "ok"}
 
 # *****
-# 获取历史会话标题
+# 功能 获取历史会话标题
+# 说明
 # *****
 def sessionGet(sql_db ,user_id):
     chatsessions = sql_db.query(ChatSession).filter(ChatSession.user_id == user_id).order_by(ChatSession.updated_at.desc()).all()
@@ -103,7 +108,8 @@ def sessionGet(sql_db ,user_id):
     return chatsessions_map
 
 # *****
-# 按照session id来判断 是否第一次记录此会话
+# 功能 按照session id来判断 是否第一次记录此会话
+# 说明
 # *****
 def sessionIdGet(sql_db ,session_id):
     chatsessions = sql_db.query(ChatSession).filter(ChatSession.session_id == session_id).first()
@@ -111,7 +117,8 @@ def sessionIdGet(sql_db ,session_id):
     return chatsessions
 
 # *****
-# 删除历史会话标题
+# 功能 删除历史会话标题
+# 说明
 # *****
 def sessionDelete(sql_db ,session_id ,user_id):
     old_session = sql_db.query(ChatSession).filter(ChatSession.session_id == session_id ,ChatSession.user_id == user_id).first()
@@ -121,7 +128,8 @@ def sessionDelete(sql_db ,session_id ,user_id):
         sql_db.commit()
 
 # *****
-# 更新历史会话标题时间
+# 功能 更新历史会话标题时间
+# 说明
 # *****
 def refreshSessionTime(sql_db ,session_id ,user_id) :
     old_session = sql_db.query(ChatSession).filter(ChatSession.session_id == session_id ,ChatSession.user_id == user_id).first()
@@ -132,7 +140,8 @@ def refreshSessionTime(sql_db ,session_id ,user_id) :
     sql_db.commit()
 
 # *****
-# 用户注册，写入user表
+# 功能 用户注册，写入user表
+# 说明
 # *****
 def userCreate(sql_db , user_name ,hashed_password):
     print ("A")
@@ -145,7 +154,8 @@ def userCreate(sql_db , user_name ,hashed_password):
     sql_db.commit()
 
 # *****
-# 检查user名是否重名
+# 功能 检查user是否存在
+# 说明
 # *****
 def userCheck(sql_db , user_name):
     old_user = sql_db.query(User).filter(User.user_name ==user_name).first()

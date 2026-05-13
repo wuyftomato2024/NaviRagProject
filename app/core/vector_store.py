@@ -4,18 +4,20 @@ import os
 import shutil
 
 # *****
-# 向量库保存到本地函数
+# 功能 向量库保存到本地函数
+# 说明
 # *****
 def save_local_vector_db(session_id ,vector_db):
     vector_db_path = f"faiss_db/{session_id}/"
     vector_db.save_local(vector_db_path)
 
 # *****
-# 向量库读取本地函数
+# 功能 向量库读取本地函数
+# 说明
 # *****
 def load_local_vector_db(session_id ,embedding_model):
     vector_db_path = f"faiss_db/{session_id}/"
-    # 因为保存到本地的向量库，不会把嵌入模型也保存到本地，所以读取的时候必须先把向量库给重新附加一次
+    # 因为保存到本地的向量库，不会把嵌入模型也保存到本地，所以读取的时候必须先把向量库给重新附加一次，安全问题需要加上allow_dangerous_deserialization
     vector_db = FAISS.load_local(vector_db_path ,embedding_model ,allow_dangerous_deserialization=True)
     if vector_db is None :
         raise HTTPException(status_code=400 ,detail="Not local db")

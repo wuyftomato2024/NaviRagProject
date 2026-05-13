@@ -4,7 +4,7 @@ from app.repositories.chat_repository import chatHistoryGet
 
 # *****
 # 功能 确定文件来源
-# 职责 整理回答的问题，整理成一个大文件块
+# 说明 整理回答的问题，整理成一个大文件块
 # *****
 def chunk_hit(chunk_texts):
     ai_text_map = [f"filename : {doc.metadata['file_name']} \n file_content :{doc.page_content}" for doc in chunk_texts]
@@ -15,7 +15,7 @@ def chunk_hit(chunk_texts):
 
 # *****
 # 功能 确定文件来源
-# 职责 命中文件来源llm
+# 说明 让模型确认回答来自哪个文件
 # *****
 def chunk_hit_llm(question ,chunk_texts ,sql_db ,session_id ,openai_api_key ,model_flag ,user_id):
     ai_text_all = chunk_hit(chunk_texts)

@@ -19,19 +19,22 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 # *****
-# 密码哈希化
+# 功能 密码哈希化
+# 说明
 # *****
 def hash_password(password):
     return pwd_context.hash(password)
 
 # *****
-# 用输入密码和哈希化的密码去比较
+# 功能 用输入密码和哈希化的密码去比较
+# 说明 每次输入的密码哈希化都会加入变数，会导致哈希化的内容不一样，所以要用这个方法，把哈希化的密码给反向解密，再和输入的密码去比对
 # *****
 def verify_password(password, hashed_password):
     return pwd_context.verify(password,hashed_password)
 
 # *****
-# 生成jwt token
+# 功能生成jwt token
+# 说明
 # *****
 def access_token_create(data :dict):
     token_data = data.copy()
@@ -44,7 +47,8 @@ def access_token_create(data :dict):
     return token
 
 # *****
-# 验证jwt token
+# 功能 验证jwt token
+# 说明
 # *****
 def check_accsess_token(token):
     try :
@@ -67,7 +71,8 @@ def check_accsess_token(token):
         }
 
 # *****
-# 从header获取token，并且验证jwt token 返回user_name
+# 功能 从header获取token，并且验证jwt token 返回user_name
+# 说明
 # *****
 def get_current_user(token = Depends(oauth2_scheme)):
     return check_accsess_token(token)

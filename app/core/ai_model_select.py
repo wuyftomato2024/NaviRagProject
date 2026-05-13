@@ -5,7 +5,8 @@ from langchain_community.embeddings import OllamaEmbeddings
 from fastapi import HTTPException
 
 # *****
-# ai模型选择
+# 功能 ai模型选择
+# 说明
 # *****  
 def ai_model_select(model_flag ,openai_api_key):
     if model_flag == "openai" :

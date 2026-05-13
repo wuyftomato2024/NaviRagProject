@@ -77,7 +77,34 @@ async def error(request,exc :Exception):
     )
 
 # *****
-# 生成uuid
+# 功能 新用户注册
+# 说明
+# *****
+@app.post("/register")
+def userCreate(
+    user_name :str = Form(...) ,
+    password : str = Form(...) ,
+    sql_db = Depends(get_db)
+    ):
+    
+   return register(sql_db ,user_name ,password)
+
+# *****
+# 功能 用户登录
+# 说明
+# *****
+@app.post("/login")
+def userLogin(
+    user_name :str = Form(...) ,
+    password : str = Form(...) ,
+    sql_db = Depends(get_db)
+    ):
+
+    return login(sql_db ,user_name ,password)
+
+# *****
+# 功能 生成uuid
+# 说明 需要uuid的时候，先请求接口，后端生成uuid，前端再保存
 # *****
 @app.post("/sessionID")
 def sessionIdCreated():
@@ -86,7 +113,38 @@ def sessionIdCreated():
     return session_id
 
 # *****
-# Chat接口
+# 功能 聊天历史删除
+# 说明
+# *****
+@app.delete("/chat/history/{session_id}")
+def sessionDelete(session_id :str ,sql_db = Depends(get_db) ,current_user = Depends(get_current_user)):
+    user_id = current_user["user_id"]
+
+    return sessionDeleteLogic(session_id = session_id ,sql_db = sql_db ,user_id = user_id)
+
+# *****
+# 功能 根据id获取聊天历史
+# 说明 根据session_id从session_id表内获取标题
+# *****
+@app.get("/chat/history/{session_id}")
+def getChat(session_id :str , sql_db = Depends(get_db) ,current_user = Depends(get_current_user)):
+    user_id = current_user["user_id"]
+
+    return sql_message_process(sql_db =sql_db, session_id =session_id ,user_id =user_id)
+
+# *****
+# 功能 获取左侧side bar的chat标题
+# 说明 获取标题，显示在左侧的side bar里面
+# *****
+@app.get("/chat/session")
+def getSession(sql_db = Depends(get_db) ,current_user = Depends(get_current_user)):
+    user_id = current_user["user_id"]
+
+    return sessionGet(sql_db ,user_id)
+
+# *****
+# 功能 Chat接口
+# 说明 
 # *****
 @app.post("/chat" ,response_model=ApiResponse)
 async def chat(
@@ -103,7 +161,6 @@ async def chat(
 ):
     
     user_id = current_user["user_id"]
-    print(user_id)
 
     # ①__file__：当前这个 .py 文件的位置 ②Path(__file__)：把它变成路径对象 ③.resolve()：转成完整绝对路径 ④.parents[1]：往上退两层目录
     BASE_DIR = Path(__file__).resolve().parents[1]
@@ -126,68 +183,4 @@ async def chat(
         model_flag = model_flag ,
         user_id = user_id
         )
-    return response
-
-# *****
-# 聊天历史删除
-# *****
-@app.delete("/chat/history/{session_id}")
-def sessionDelete(session_id :str ,sql_db = Depends(get_db) ,current_user = Depends(get_current_user)):
-    user_id = current_user["user_id"]
-
-    response = sessionDeleteLogic(
-        session_id = session_id ,
-        sql_db = sql_db ,
-        user_id = user_id
-        )
-
-    return response
-
-# *****
-# 根据id获取聊天历史
-# *****
-@app.get("/chat/history/{session_id}")
-def getChat(session_id :str , sql_db = Depends(get_db) ,current_user = Depends(get_current_user)):
-    user_id = current_user["user_id"]
-
-    message_list = sql_message_process(sql_db =sql_db, session_id =session_id ,user_id =user_id)
-
-    return message_list
-
-# *****
-# 左侧side bar消息列表获取
-# *****
-@app.get("/chat/session")
-def getSession(
-    sql_db = Depends(get_db) ,
-    current_user = Depends(get_current_user)
-    ):
-    user_id = current_user["user_id"]
-    response = sessionGet(sql_db ,user_id)
-
-    return response
-
-# *****
-# 注册
-# *****
-@app.post("/register")
-def userCreate(
-    user_name :str = Form(...) ,
-    password : str = Form(...) ,
-    sql_db = Depends(get_db)
-    ):
-   response = register(sql_db ,user_name ,password)
-   return response
-
-# *****
-# 登录
-# *****
-@app.post("/login")
-def userLogin(
-    user_name :str = Form(...) ,
-    password : str = Form(...) ,
-    sql_db = Depends(get_db)
-    ):
-    response = login(sql_db ,user_name ,password)
-
     return response

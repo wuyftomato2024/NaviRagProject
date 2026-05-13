@@ -3,7 +3,8 @@ from app.repositories.chat_repository import chatHistoryGet
 from app.schemas.model import HistoryItem
 
 # *****
-# 前端输出转换
+# 功能 前端输出转换
+# 说明 把sql抽出的每一条消息，拼装成pydantic设定好的模型形式返回
 # *****    
 def sql_message_process(sql_db ,session_id ,user_id):
     sql_messages = chatHistoryGet(sql_db = sql_db,session_id = session_id ,user_id =user_id)

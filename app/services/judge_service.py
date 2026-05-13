@@ -2,6 +2,10 @@ from app.core.ai_model_select import ai_model_select
 from app.prompts.prompt_builder import judge_prompt
 from app.repositories.chat_repository import chatHistoryGet
 
+# *****
+# 功能 回答模式判断逻辑
+# 说明 通过问题去对ai进行提问，判断此次回答需要走哪个回答模式
+# *****
 def judge(question ,openai_api_key ,sql_db ,session_id ,model_flag ,user_id):
     ai_model ,_ =ai_model_select(model_flag ,openai_api_key)
     model = ai_model

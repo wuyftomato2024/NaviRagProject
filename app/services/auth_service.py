@@ -3,17 +3,15 @@ from app.repositories.chat_repository import userCreate ,userCheck
 from app.core.security import hash_password ,verify_password ,access_token_create
 
 # *****
-# 用户注册
+# 功能 用户注册
+# 说明
 # *****
 def register(sql_db ,user_name ,password):
 
     result = userCheck(sql_db ,user_name)
 
     if result :
-        raise HTTPException(status_code=400 ,detail="username already exists")
-    
-    print(password)
-    print(len(password.encode("utf-8")))
+        raise HTTPException(status_code=400 ,detail="username already exists") 
 
     hashed_password = hash_password(password)
 
@@ -22,11 +20,11 @@ def register(sql_db ,user_name ,password):
     return {"status": "ok"}
 
 # *****
-# 用户登录
+# 功能 用户登录
+# 说明
 # *****
 def login(sql_db ,user_name ,password):
     user = userCheck(sql_db ,user_name)
-    print (user.id)
 
     if not user :
         raise HTTPException(status_code=404 ,detail="user is not existence")

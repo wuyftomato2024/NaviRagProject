@@ -3,6 +3,10 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import TextLoader , PyPDFLoader
 import os
 
+# *****
+# 功能 文件上传逻辑
+# 说明 
+# *****
 async def handle_upload_files(upload_file):
     docs_list = []
     # index是自动从0开始赋值，有点类似于i等于0，i++那种感觉，而enumerate()是一个特殊用法，用来给东西增加编号
@@ -41,7 +45,7 @@ async def handle_upload_files(upload_file):
                 )
         texts = text_splitters.split_documents(docs)
 
-        # 循环 给text里面a新增一个metadata，名字叫做file_name，而内容是上面的file_name
+        # 循环 给text里面新增一个metadata的dict，key叫做file_name，而key是上面的file_name
         for text in texts:
             text.metadata["file_name"] = file_name
 
