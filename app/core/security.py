@@ -59,9 +59,6 @@ def check_accsess_token(token):
     user_name = token_restore.get("user_name")
     user_id = token_restore.get("user_id")
 
-    print(user_name)
-    print(user_id)
-
     if user_name is None :
         raise HTTPException(status_code=401 ,detail="Invalid token")
     

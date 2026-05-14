@@ -144,7 +144,6 @@ def refreshSessionTime(sql_db ,session_id ,user_id) :
 # 说明
 # *****
 def userCreate(sql_db , user_name ,hashed_password):
-    print ("A")
     new_user = User(
         user_name = user_name ,
         hashed_password = hashed_password

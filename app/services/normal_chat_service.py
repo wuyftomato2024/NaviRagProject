@@ -4,7 +4,6 @@ from app.core.ai_request_format_select import answer_model
 from app.core.dataFormat_change import sql_message_process
 from app.repositories.chat_repository import chatHistoryGet ,chatCreate ,refreshSessionTime
 from app.schemas.model import ApiResponse ,ChatResponse
-from app.schemas.chat_context import normalChatContext
 
 # *****
 # 功能 普通Chat逻辑

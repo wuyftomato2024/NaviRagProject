@@ -1,186 +1,177 @@
 # NaviRagProject
 
-NaviRagProject is a FastAPI-based RAG chat application that supports normal chat, file-based RAG chat, SQL-based chat history, session history query, session deletion, local FAISS vector storage, and OpenAI / Ollama model switching.
+## Project Summary
 
-This project started as a learning RAG demo and has gradually been refactored into a small AI application that can run locally and be deployed to AWS EC2.
+NaviRagProject is a FastAPI-based AI chat application with two main interaction modes:
 
-## Overview
+- normal chat with an LLM
+- file-based RAG chat using uploaded `.txt` or `.pdf` documents
 
-The project currently supports:
+The project also includes JWT authentication, multi-user data isolation, backend-generated UUID sessions, session history management, local FAISS vector storage, OpenAI / Ollama model switching, and a lightweight static frontend for registration, login, and chat.
 
-- Normal chat
-- RAG chat with uploaded files
-- Automatic routing between normal chat and RAG chat
-- SQL-based chat history persistence
-- Session history query by session_id
-- Session deletion by session_id
-- Local FAISS vector store save/load
-- OpenAI / Ollama model switching
-- Local embedding model support
-- HTML / CSS / JavaScript test frontend
-- AWS EC2 deployment verification
+This project started as a learning RAG demo and has gradually been refactored into a small full-stack AI application.
 
 ## Tech Stack
 
 ### Backend
 
-- Python
+- Python 3
 - FastAPI
 - SQLAlchemy
-- MySQL / MariaDB
-- FAISS
+- MySQL via `PyMySQL`
 - LangChain
-- OpenAI API
-- Ollama
+- OpenAI API via `langchain-openai`
+- Ollama via `langchain-community`
+- FAISS for local vector storage
+- `python-jose` for JWT authentication
+- `passlib[bcrypt]` for password hashing
+- `python-dotenv` for environment loading
 
 ### Frontend
 
-- HTML
+- Static HTML
+- Vanilla JavaScript
 - CSS
-- JavaScript
 
-### Deployment
+### Storage
 
-- AWS EC2
-- Uvicorn
-- Python http.server
+- MySQL tables for users, sessions, and chat messages
+- Local filesystem storage under `faiss_db/<session_id>/` for FAISS indexes
 
-## Main Features
-
-### 1. Normal Chat
-
-When no file is uploaded, the system works as a normal AI chat application.
-
-Chat history is saved into SQL and separated by session_id.
-
-### 2. RAG Chat with Files
-
-When a txt or pdf file is uploaded, the backend loads the file, splits it into chunks, creates embeddings, stores them in a local FAISS vector store, retrieves relevant chunks, and sends the retrieved context to the model to generate an answer.
-
-### 3. Local FAISS Vector Store
-
-Vector stores are saved locally by session_id:
-
-```text
-faiss_db/{session_id}/
-```
-
-If the user does not upload a new file but the vector store exists for the session_id, the backend can load the local FAISS store and continue RAG chat.
-
-### 4. SQL Chat History
-
-Chat messages are stored in MySQL.
-
-The project supports querying chat history by session_id and displaying it on the frontend.
-
-### 5. Session Deletion
-
-The project supports deleting a session by session_id.
-
-It deletes:
-
-- SQL chat history
-- Local FAISS vector store directory
-
-If the local vector store does not exist, SQL chat history can still be deleted normally.
-
-### 6. Model Switching
-
-The project supports model switching through model_flag:
-
-- openai
-- ollama
-
-OpenAI mode requires an OpenAI API key.  
-Ollama mode uses local chat and embedding models.
-
-### 7. Test Frontend
-
-The frontend supports:
-
-- Asking questions
-- Uploading files
-- Setting session_id
-- Selecting model mode
-- Displaying answers
-- Displaying source files
-- Querying session history
-- Deleting sessions
-
-## Project Structure
+## Current Project Structure
 
 ```text
 NaviRagProject/
-├── app/
-│   ├── main.py
-│   ├── api/
-│   │   └── chat.py
-│   ├── services/
-│   │   ├── chunk_hit_service.py
-│   │   ├── judge_service.py
-│   │   ├── normal_chat_service.py
-│   │   ├── rag_service.py
-│   │   ├── summary_service.py
-│   │   └── uploadfile_service.py
-│   ├── repositories/
-│   │   └── chat_repository.py
-│   ├── core/
-│   │   ├── ai_model_select.py
-│   │   ├── ai_request_format_select.py
-│   │   ├── chunk_search.py
-│   │   ├── database.py
-│   │   ├── dataFormat_change.py
-│   │   ├── db_format.py
-│   │   └── vector_store.py
-│   ├── schemas/
-│   │   ├── models.py
-│   │   └── db_model.py
-│   └── prompts/
-│       └── prompt_builder.py
-├── frontend/
-│   └── static/
-│       ├── index.html
-│       ├── app.js
-│       └── style.css
-├── docs/
-├── requirements.txt
-├── configuration.example.env
-└── README.md
+|-- app/
+|   |-- api/
+|   |   |-- chat.py
+|   |   `-- vector_store_delete.py
+|   |-- core/
+|   |   |-- ai_model_select.py
+|   |   |-- ai_request_format_select.py
+|   |   |-- chunk_search.py
+|   |   |-- database.py
+|   |   |-- dataFormat_change.py
+|   |   |-- db_tables.py
+|   |   |-- security.py
+|   |   `-- vector_store.py
+|   |-- prompts/
+|   |   `-- prompt_builder.py
+|   |-- repositories/
+|   |   `-- chat_repository.py
+|   |-- schemas/
+|   |   |-- chat_context.py
+|   |   |-- db_schema.py
+|   |   `-- model.py
+|   |-- services/
+|   |   |-- auth_service.py
+|   |   |-- chunk_hit_service.py
+|   |   |-- judge_service.py
+|   |   |-- normal_chat_service.py
+|   |   |-- rag_service.py
+|   |   |-- summary_service.py
+|   |   `-- uploadfile_service.py
+|   `-- main.py
+|-- faiss_db/
+|-- frontend/
+|   `-- static/
+|       |-- app.js
+|       |-- auth.js
+|       |-- chat.html
+|       |-- index.html
+|       |-- register.html
+|       `-- style.css
+|-- configuration_example.env
+|-- requirements.txt
+`-- README.md
 ```
 
-## Configuration
+> `configuration.env` is used locally for secrets and environment-specific values, but it should not be committed to the repository.
 
-The project can load environment values from a configuration file.
+## Main Features
 
-Create the following file in the project root:
+### Normal Chat
 
-```text
-configuration.env
+- `POST /chat` runs standard chat when no file is uploaded and no document retrieval path is selected.
+- Chat history is stored in MySQL per `user_id` and `session_id`.
+
+### RAG Chat
+
+- Uploaded `.txt` and `.pdf` files are parsed, split into text chunks, embedded, and stored in a local FAISS index.
+- If a FAISS index already exists for the same session, later requests can reuse it without re-uploading the file.
+- Retrieved chunks are injected into the model prompt before answer generation.
+- Source file metadata is stored in chunk metadata and can be returned to the frontend.
+
+### Summary Flow
+
+- The RAG flow includes a summary branch in `app/services/summary_service.py`.
+- The backend first checks whether the user request is summary-related.
+- If the request is confirmed as a summary request, the answer is generated from retrieved chunks through the summary flow.
+- This avoids running a normal RAG answer first and then overwriting it with a summary answer.
+
+### Backend-generated UUID Sessions
+
+- `POST /sessionID` returns a UUID generated by the backend.
+- The frontend uses this UUID as the conversation session key.
+- Users no longer need to manually input session IDs.
+
+### Session Title, History, and Deletion
+
+- A new chat session record is created automatically on the first chat request for a new `session_id`.
+- The initial session title is derived from the first question and truncated to 20 characters.
+- `GET /chat/session` returns the current user's session list for the sidebar.
+- Session records are sorted by `updated_at`, so recently used sessions appear first.
+- `GET /chat/history/{session_id}` returns the message history for one session.
+- `DELETE /chat/history/{session_id}` deletes SQL chat history, the session record, and the local FAISS directory when present.
+
+### JWT Authentication
+
+- `POST /register` creates a user account.
+- `POST /login` verifies the user password and returns a bearer token.
+- Passwords are stored as bcrypt hashes, not as raw text.
+- Protected endpoints use `OAuth2PasswordBearer` and JWT validation in `app/core/security.py`.
+
+### Multi-user Data Isolation
+
+- Chat messages and chat sessions both store `user_id`.
+- Repository queries for session lists, history, refresh, and deletion are filtered by `user_id`.
+- This ensures that each user can only access their own chat history and session metadata.
+
+### OpenAI / Ollama Model Switching
+
+- `model_flag=openai` uses OpenAI-based chat and embeddings.
+- `model_flag=ollama` uses local Ollama-based chat and embeddings.
+- The model selection logic is handled in `app/core/ai_model_select.py`.
+
+## Configuration Files
+
+### `configuration_example.env`
+
+Template values for:
+
+- `OPENAI_API_KEY`
+- `MODEL_FLAG`
+- `DATABASE_URL`
+- `JWT_SECRET_KEY`
+- `JWT_ALGORITHM`
+- `ACCESS_TOKEN_EXPIRE_MINUTES`
+
+### `configuration.env`
+
+`configuration.env` is used locally for sensitive or environment-specific values.
+
+Operational notes:
+
+- `configuration.env` should not be committed with real secrets.
+- The current code loads JWT-related settings from this file.
+- `app/core/database.py` currently hard-codes the database connection string, even though `DATABASE_URL` exists in the example env file.
+- Moving the database connection fully to environment variables is a planned improvement.
+
+A JWT secret key can be generated with:
+
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
 ```
-
-Example:
-
-```env
-OPENAI_API_KEY=your_openai_api_key
-MODEL_FLAG=openai
-DATABASE_URL=mysql+pymysql://root:password@localhost/test_db
-```
-
-Important:
-
-```text
-configuration.env
-```
-
-should not be committed to GitHub.
-
-A sample file such as:
-
-```text
-configuration.example.env
-```
-
-can be committed as a reference.
 
 ## Backend Startup
 
@@ -188,10 +179,9 @@ From the project root:
 
 ```bash
 python -m venv myenv
-source myenv/bin/activate
 ```
 
-On Windows:
+Activate the virtual environment on Windows:
 
 ```bash
 myenv\Scripts\activate
@@ -203,117 +193,228 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Start the backend:
+Start the FastAPI server:
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-Open:
+Backend URLs:
 
-```text
-http://localhost:8000/docs
-```
+- App root: `http://127.0.0.1:8000/`
+- Swagger UI: `http://127.0.0.1:8000/docs`
 
 ## Frontend Startup
 
-Go to the frontend directory:
+The frontend is a static site under `frontend/static`.
+
+The current backend CORS settings explicitly allow:
+
+- `http://127.0.0.1:5500`
+- `http://localhost:5500`
+
+For that reason, serve the frontend on port `5500` unless you also update the backend CORS configuration.
+
+Example:
 
 ```bash
 cd frontend/static
-python -m http.server 3000
+python -m http.server 5500
 ```
 
-Open:
+Then open:
 
 ```text
-http://localhost:3000
+http://127.0.0.1:5500
 ```
 
-When deploying to EC2, update API_BASE_URL in the frontend JavaScript file:
+Current frontend pages:
 
-```js
-const API_BASE_URL = "http://your-ec2-public-ip:8000";
-```
+- `index.html`: login page
+- `register.html`: registration page
+- `chat.html`: main chat UI
+
+Current frontend scripts:
+
+- `auth.js`: login and registration flow
+- `app.js`: session management, chat requests, history loading, and deletion
 
 ## API Overview
 
-### Chat / RAG API
+### Public Endpoints
 
-```text
-POST /chat
+#### `GET /`
+
+Health-style root endpoint.
+
+Returns a simple message indicating that FastAPI is running.
+
+#### `POST /register`
+
+Form fields:
+
+- `user_name`
+- `password`
+
+Purpose:
+
+- Create a new user account
+- Store the password as a bcrypt hash
+
+#### `POST /login`
+
+Form fields:
+
+- `user_name`
+- `password`
+
+Purpose:
+
+- Validate user credentials
+- Return a JWT bearer token
+
+#### `POST /sessionID`
+
+Purpose:
+
+- Generate a backend-side UUID session ID
+
+### Protected Endpoints
+
+The following endpoints require:
+
+```http
+Authorization: Bearer <token>
 ```
 
-Main parameters:
+#### `POST /chat`
 
-- question
-- session_id
-- upload_file
-- top_k
-- model_flag
-- openai_api_key
+Form fields:
 
-Notes:
+- `question` required
+- `session_id` required
+- `upload_file` optional, multiple files supported
+- `top_k` optional, integer from 1 to 3, default `3`
+- `model_flag` optional, default `openai`
 
-- Without file upload, the system runs normal chat or loads an existing vector store
-- With file upload, the system creates or overwrites the local vector store for the session_id
-- model_flag supports openai / ollama
+Behavior:
 
-### Query Session History
+- Creates a session automatically if the provided `session_id` does not yet exist
+- Uses normal chat when no RAG path is selected
+- Uses RAG when files are uploaded or when an existing session FAISS index is used
+- May enter a summary branch during the RAG flow
 
-```text
-GET /chat/history
-```
+Response model:
 
-Returns chat history by session_id.
+- `status`
+- `data.answer`
+- `data.chatHistory`
+- `data.tag`
 
-### Delete Session
+#### `GET /chat/session`
 
-```text
-DELETE /chat/db
-```
+Purpose:
 
-Deletes:
+- Return the authenticated user's chat session list
 
-- SQL chat history
-- Local vector store directory
+#### `GET /chat/history/{session_id}`
 
-by session_id.
+Purpose:
+
+- Return the authenticated user's chat history for one session
+
+#### `DELETE /chat/history/{session_id}`
+
+Purpose:
+
+- Delete the authenticated user's SQL chat history
+- Delete the authenticated user's session record
+- Delete the local FAISS folder for that session if it exists
 
 ## AWS Deployment Notes
 
-This project has been deployed and verified on AWS EC2.
+This project has been tested on AWS EC2 as a manual deployment exercise.
 
-Verified items:
+The repository currently does not include production deployment files such as:
 
-- Python 3.11 installation on EC2
-- requirements.txt installation
-- MySQL / MariaDB installation on EC2
-- Backend startup
-- Frontend startup with Python http.server
-- Mobile browser access to EC2 frontend
-- Frontend request to backend
-- CORS configuration
-- MySQL Chinese character encoding issue fix
+- Dockerfiles
+- Terraform or CloudFormation templates
+- systemd service files
+- Nginx configuration
 
-Common notes:
+For EC2-style testing, the current code implies these requirements:
 
-- MySQL / MariaDB should use utf8mb4 to support Chinese text
-- EC2 security group should open ports 8000 and 3000 for testing
-- FastAPI CORS middleware is required when frontend and backend use different ports
-- faiss_db uses relative paths, so the backend should be started from the project root
+- Run the backend from the project root so relative `faiss_db/...` paths resolve correctly
+- Provide MySQL / MariaDB for SQL persistence
+- Provide persistent storage for the local `faiss_db/` directory if RAG indexes should survive restarts
+- Install and run Ollama separately if `model_flag=ollama` is needed
+- Update CORS settings if the frontend is not served from `localhost:5500` or `127.0.0.1:5500`
+- Update `frontend/static/app.js` if the backend base URL changes from `http://127.0.0.1:8000`
+
+Security notes for AWS:
+
+- Move secrets out of committed files and into environment variables or a secret manager
+- Replace the hard-coded database URL in `app/core/database.py`
+- Restrict inbound ports instead of exposing development ports broadly
+- Use a reverse proxy such as Nginx for a more production-like deployment
+
+## Recent Updates
+
+### Session Management
+
+- Replaced manual session ID input with backend-generated UUID session IDs
+- Added session title management
+- Added session list display by title
+- Added `updated_at` refresh for recently used sessions
+- Added session sorting by latest activity
+
+### Authentication
+
+- Added user registration and login
+- Added bcrypt password hashing
+- Added JWT access token generation
+- Added frontend token storage
+- Added backend token verification
+- Protected chat-related APIs with JWT authentication
+
+### Multi-user Isolation
+
+- Added `user_id` to session and message data
+- Filtered session list, chat history, RAG, summary, and deletion by `user_id`
+- Verified that different accounts cannot access each other's chat data
+
+### Code Refactoring
+
+- Optimized RAG summary handling flow
+- Introduced dataclass-based context objects for high-frequency chat parameters
+- Improved comments for core logic blocks
 
 ## Future Plans
 
-- Improve README and deployment documents
-- Add JWT authentication
-- Add more formal user/session management
-- Improve frontend UI
-- Improve configuration management
-- Consider Nginx / systemd for production-like deployment
-- Improve RAG retrieval quality and source display
+Based on the current codebase, the next natural improvements are:
+
+- Move database configuration fully to environment variables
+- Remove committed secrets and standardize secret management
+- Add production deployment files such as Docker, systemd, or Nginx configuration
+- Improve route and service naming consistency
+- Make prompt text and frontend UI copy easier to maintain
+- Add automated tests for authentication, session isolation, and RAG flows
+- Improve source citation formatting in RAG responses
+- Refine frontend UI and localization
+- Consider refresh token / token renewal flow
 
 ## Project Status
 
-This is a working prototype / semi-finished project.  
-Core features are implemented and verified locally and on AWS EC2.
+This is a working prototype / semi-finished AI chat application.
+
+Core features are implemented and verified locally:
+
+- Normal chat
+- RAG chat
+- SQL history
+- backend-generated session management
+- JWT authentication
+- multi-user data isolation
+- frontend integration
+
+The project has also been tested on AWS EC2 in a manual test environment.
