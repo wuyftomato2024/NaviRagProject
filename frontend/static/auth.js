@@ -129,3 +129,5 @@ if (loginForm) {
 if (registerForm) {
   registerForm.addEventListener("submit", handleRegisterSubmit);
 }
+
+// test for linux shell

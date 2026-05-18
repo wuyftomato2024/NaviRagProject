@@ -516,3 +516,5 @@ if (hasAccessToken()) {
 } else {
   renderLoggedOutState();
 }
+
+// test for linux shell
