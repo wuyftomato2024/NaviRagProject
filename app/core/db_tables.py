@@ -36,4 +36,13 @@ class User(Base):
     user_name = Column(String(50) ,unique=True ,nullable=False ,index=True)
     hashed_password = Column(String(255) ,nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
-    
+
+class DevLogMessages(Base):
+    __tablename__ = "devlogmessages"
+
+    # 数字类型(int)配合主key，会自动分配数字
+    id = Column(Integer ,primary_key=True ,index=True)
+    session_id = Column(String(50) ,nullable=False)
+    user_id = Column(Integer ,nullable=False)
+    content = Column(Text ,nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)    

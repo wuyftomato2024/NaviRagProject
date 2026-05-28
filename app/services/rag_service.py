@@ -11,6 +11,7 @@ from app.services.summary_service import summary ,summary_answer
 from app.services.chunk_hit_service import chunk_hit_llm
 from app.repositories.chat_repository import chatHistoryGet ,chatCreate ,refreshSessionTime
 from app.schemas.model import ApiResponse ,ChatResponse
+from app.services.logcreateJudge_service import devLog_judge ,devLog_content_create
 
 # *****
 # 功能 RagChat逻辑
@@ -46,6 +47,12 @@ async def ragChat(ragContext):
     # 向量库检索
     chunk_content_text ,chunk_texts= chunk_context(vector_db ,ragContext.top_k ,ragContext.question)
 
+    logCreate_kws =["写入日志" ,"记录日志" ,"保存为日志" ,"生成日志" ,"日志" ,"生成" ,"一份"]
+
+    is_logCreate =any(logCreate_kw in ragContext.question for logCreate_kw in logCreate_kws)
+
+    logCreate_flag = False
+
     # rag内容分支判断（判断这个问题，是否归为总结类）
     summary_kws = ["总结","概括","主要内容","大意","讲了什么"]
     
@@ -60,6 +67,16 @@ async def ragChat(ragContext):
         print("summary success")
         summary_answer_response = summary_answer(ragContext.openai_api_key ,vector_db ,ragContext.top_k ,ragContext.question ,ragContext.model_flag)
         result = summary_answer_response
+    elif is_logCreate :
+        devLog_judge_result = devLog_judge(ragContext.question ,ragContext.openai_api_key ,ragContext.model_flag)
+        if  devLog_judge_result == "True" :
+            logCreate_flag = True
+    if logCreate_flag : 
+        print("logCreate success")
+        
+        response =devLog_content_create(sql_db = ragContext.sql_db ,session_id= ragContext.session_id ,user_id =ragContext.user_id ,question= ragContext.question ,model_flag = ragContext.model_flag , openai_api_key = ragContext.openai_api_key)
+
+        result = response
     else :
         qa_prompt = answer_model(ragContext.question)
         sql_messages = chatHistoryGet(sql_db = ragContext.sql_db ,session_id = ragContext.session_id ,user_id = ragContext.user_id)
@@ -70,6 +87,7 @@ async def ragChat(ragContext):
 
         result = response.content
             
+    print(logCreate_flag)
     chatCreate(sql_db =ragContext.sql_db, session_id =ragContext.session_id,role = "HumanMessage" , content = ragContext.question ,user_id = ragContext.user_id)
     chatCreate(sql_db =ragContext.sql_db, session_id =ragContext.session_id,role = "AIMessage" , content = result ,user_id = ragContext.user_id)
     refreshSessionTime(sql_db = ragContext.sql_db,session_id =ragContext.session_id ,user_id = ragContext.user_id)

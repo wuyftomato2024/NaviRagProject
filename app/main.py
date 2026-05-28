@@ -2,7 +2,7 @@ import os
 import uuid
 from pathlib import Path
 from dotenv import load_dotenv
-from fastapi import FastAPI, UploadFile, File, Form ,HTTPException ,Depends
+from fastapi import FastAPI, UploadFile, File, Form ,HTTPException ,Depends ,WebSocket ,WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
@@ -14,9 +14,30 @@ from app.schemas.model import ApiResponse
 from app.repositories.chat_repository import sessionCreate ,sessionGet ,sessionIdGet
 from app.services.auth_service import register ,login
 from app.core.security import get_current_user
+from app.repositories.devlog_repository import contextCreate ,contextDelete ,contextListGet
+
 
 # 创建 FastAPI 应用
 app = FastAPI()
+
+# 存档websocket
+active_connections = []
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket :WebSocket):
+    await websocket.accept()
+    active_connections.append(websocket)
+
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        active_connections.remove(websocket)
+        print("websocket disconnected")
+
+async def notify_all(message : str):
+    for connection in active_connections:
+        await connection.send_text(message)
 
 # ===== Codex added: frontend CORS support =====
 # This block was added by Codex for the static frontend.
@@ -185,4 +206,23 @@ async def chat(
         )
     return response
 
-    # // test for linux shell
+@app.post("/context")
+async def context_input(session_id :str ,content :str ,sql_db = Depends(get_db) ,current_user = Depends(get_current_user)):
+    print (current_user)
+    user_id = current_user["user_id"]
+    await notify_all("日志已记录")
+    return contextCreate(sql_db ,session_id ,user_id ,content)
+
+@app.get("/getDevlog")
+def getDevlog(sql_db =Depends(get_db) ,current_user = Depends(get_current_user)):
+    user_id = current_user["user_id"] 
+    contextList = contextListGet(sql_db ,user_id)
+
+    return contextList
+
+@app.delete("/deleteDevlog/{id}")
+async def devlogDelete(id ,sql_db = Depends(get_db) ,current_user = Depends(get_current_user)):
+    user_id = current_user["user_id"] 
+    contextDelete(sql_db ,id ,user_id)
+    await notify_all("日志已删除")
+    return 
