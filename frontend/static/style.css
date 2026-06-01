@@ -705,6 +705,14 @@ textarea:focus {
   font-weight: 700;
 }
 
+.devlog-entry-title {
+  margin-bottom: 8px;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
 .devlog-entry-content {
   white-space: pre-wrap;
   word-break: break-word;

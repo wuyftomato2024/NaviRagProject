@@ -183,6 +183,7 @@ function normalizeDevlogItem(item) {
   return {
     id: Number(item?.id),
     sessionId: String(item?.session_id ?? item?.sessionId ?? "").trim(),
+    title: String(item?.title ?? "").trim() || "Untitled devlog",
     content: String(item?.content ?? "").trim(),
     createdAt: String(item?.created_at ?? item?.createdAt ?? "").trim(),
   };
@@ -340,11 +341,21 @@ function renderDevlogCalendar(items) {
     : [];
 
   if (devlogItems.length === 0) {
-    currentDevlogMonthKey = null;
+    currentDevlogMonthKey = buildMonthKey(new Date());
     selectedDevlogDateKey = null;
-    devlogCalendarTitle.textContent = "Devlog Calendar";
-    devlogCalendar.innerHTML = `<div class="empty-box">${escapeHtml(DEVLOG_EMPTY_TEXT)}</div>`;
-    devlogDetail.innerHTML = '<div class="empty-box">点击日历中的日期后，这里会显示当天的详细日志。</div>';
+    const emptyGroupMap = new Map();
+    renderDevlogMonth(emptyGroupMap);
+    devlogDetail.innerHTML = `
+      <section class="devlog-detail-card">
+        <div class="devlog-detail-header">
+          <div>
+            <div class="devlog-detail-title">Devlog Detail</div>
+            <div class="devlog-detail-subtitle">${escapeHtml(DEVLOG_EMPTY_TEXT)}</div>
+          </div>
+        </div>
+        <div class="empty-box">这个月的日历会先保留在这里，等你保存第一条日志后就会按日期显示。</div>
+      </section>
+    `;
     return;
   }
 
@@ -456,6 +467,7 @@ function renderDevlogDetail(groupMap) {
             <span class="devlog-entry-time">${escapeHtml(formatDevlogTime(item.createdAt))}</span>
             <button class="devlog-delete" type="button" data-devlog-id="${item.id}" aria-label="Delete devlog">Delete</button>
           </div>
+          <div class="devlog-entry-title">${escapeHtml(item.title)}</div>
           <div class="devlog-entry-content">${escapeHtml(item.content)}</div>
         </article>
       `,

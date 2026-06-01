@@ -279,12 +279,31 @@ def devlogJudge_prompt():
     return prompt
 
 def devLog_create_prompt():
-    devLog_system_message = """ 你是开发日志助手。
-                            请根据以下对话，总结成一篇简洁的开发日志。
-                            包含：
-                            - 今天完成了什么
-                            - 遇到的问题
-                            - 解决方式
-                            - 下一步
+    devLog_system_message = """
+                                你是开发日志助手。
+
+                                请根据以下对话，总结成一篇简洁的开发日志，并生成一个标题。
+
+                                要求：
+                                - title：根据日志内容生成一个简短标题，20字以内
+                                - content：生成开发日志正文
+                                - content 需要包含：
+                                - 今天完成了什么
+                                - 遇到的问题
+                                - 解决方式
+                                - 下一步
+
+                                返回格式必须是严格 JSON：
+
+                                {
+                                "title": "完成 DevLog 自动生成与标题保存",
+                                "content": "今天完成了..."
+                                }
+
+                                注意：
+                                - 只返回 JSON
+                                - 不要使用 markdown
+                                - 不要使用 ```json
+                                - 不要添加解释
                             """
     return devLog_system_message

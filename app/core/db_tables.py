@@ -44,5 +44,6 @@ class DevLogMessages(Base):
     id = Column(Integer ,primary_key=True ,index=True)
     session_id = Column(String(50) ,nullable=False)
     user_id = Column(Integer ,nullable=False)
+    title = Column(String(50) ,nullable=False)
     content = Column(Text ,nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)    

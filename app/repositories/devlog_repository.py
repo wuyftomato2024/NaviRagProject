@@ -4,10 +4,11 @@ from app.core.db_tables import User ,DevLogMessages
 # 功能 log登记
 # 说明
 # *****
-def contextCreate(sql_db ,session_id ,user_id ,content):
+def contextCreate(sql_db ,session_id ,user_id , title ,content):
     new_context = DevLogMessages(
         session_id = session_id ,
         user_id = user_id ,
+        title = title ,
         content = content
     )
 
