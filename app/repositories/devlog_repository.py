@@ -1,4 +1,5 @@
 from app.core.db_tables import User ,DevLogMessages
+from sqlalchemy import or_
 
 # *****
 # 功能 log登记
@@ -21,14 +22,14 @@ def contextCreate(sql_db ,session_id ,user_id , title ,content):
 # 功能 读取所有log
 # 说明
 # *****
-def contextListGet(sql_db ,user_id):
+def contextListGet(sql_db ,user_id ,keyword):
 
-    contextList = sql_db.query(DevLogMessages).filter(DevLogMessages.user_id == user_id).order_by(DevLogMessages.created_at.desc()).all()
+    contextList = sql_db.query(DevLogMessages).filter(DevLogMessages.user_id == user_id)
 
-    if not contextList :
-        contextList = []
+    if keyword :
+        contextList = contextList.filter( or_(DevLogMessages.title.like(f"%{keyword}%") ,DevLogMessages.content.like(f"%{keyword}%")))
 
-    return contextList
+    return contextList.order_by(DevLogMessages.created_at.desc()).all()
 
 # *****
 # 功能 删除单条log

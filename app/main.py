@@ -214,9 +214,9 @@ async def context_input(session_id :str ,content :str ,sql_db = Depends(get_db) 
     return contextCreate(sql_db ,session_id ,user_id ,content)
 
 @app.get("/getDevlog")
-def getDevlog(sql_db =Depends(get_db) ,current_user = Depends(get_current_user)):
+def getDevlog(keyword: str|None = None  ,sql_db =Depends(get_db) ,current_user = Depends(get_current_user)):
     user_id = current_user["user_id"] 
-    contextList = contextListGet(sql_db ,user_id)
+    contextList = contextListGet(sql_db ,user_id ,keyword)
 
     return contextList
 

@@ -478,6 +478,24 @@ textarea:focus {
   background: linear-gradient(135deg, #f8fbff 0%, #eef6ff 100%);
 }
 
+.devlog-search-panel {
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.devlog-search-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.devlog-search-actions .btn {
+  margin-top: 0;
+}
+
 .devlog-action-row {
   display: flex;
   justify-content: flex-end;
@@ -911,6 +929,10 @@ textarea:focus {
   }
 
   .button-row {
+    grid-template-columns: 1fr;
+  }
+
+  .devlog-search-actions {
     grid-template-columns: 1fr;
   }
 

@@ -22,6 +22,9 @@ const openDevlogButton = document.getElementById("open-devlog-button");
 const devlogContentInput = document.getElementById("devlog-content");
 const saveDevlogButton = document.getElementById("save-devlog-button");
 const refreshDevlogButton = document.getElementById("refresh-devlog-button");
+const devlogSearchInput = document.getElementById("devlog-search-input");
+const searchDevlogButton = document.getElementById("search-devlog-button");
+const clearDevlogSearchButton = document.getElementById("clear-devlog-search-button");
 const devlogCalendar = document.getElementById("devlog-calendar");
 const devlogDetail = document.getElementById("devlog-detail");
 const devlogCalendarTitle = document.getElementById("devlog-calendar-title");
@@ -50,6 +53,7 @@ let websocketPingTimer = null;
 let websocketReconnectTimer = null;
 let currentDevlogMonthKey = null;
 let selectedDevlogDateKey = null;
+let currentDevlogKeyword = "";
 let lastToastFingerprint = "";
 let lastToastAt = 0;
 
@@ -96,6 +100,8 @@ function setControlsDisabled(isDisabled) {
   openDevlogButton.disabled = isDisabled;
   saveDevlogButton.disabled = isDisabled;
   refreshDevlogButton.disabled = isDisabled;
+  searchDevlogButton.disabled = isDisabled;
+  clearDevlogSearchButton.disabled = isDisabled;
 }
 
 function openDevlogDrawer() {
@@ -613,7 +619,7 @@ async function loadSessionList() {
 }
 
 async function loadDevlogs(options = {}) {
-  const { silent = false } = options;
+  const { silent = false, keyword = currentDevlogKeyword } = options;
 
   if (!ensureAuthenticated()) {
     renderLoggedOutState();
@@ -626,7 +632,17 @@ async function loadDevlogs(options = {}) {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/getDevlog`, {
+    currentDevlogKeyword = String(keyword ?? "").trim();
+    const params = new URLSearchParams();
+    if (currentDevlogKeyword) {
+      params.set("keyword", currentDevlogKeyword);
+    }
+
+    const requestUrl = params.size > 0
+      ? `${API_BASE_URL}/getDevlog?${params.toString()}`
+      : `${API_BASE_URL}/getDevlog`;
+
+    const response = await fetch(requestUrl, {
       headers: buildAuthHeaders(),
     });
     const result = await response.json();
@@ -638,7 +654,9 @@ async function loadDevlogs(options = {}) {
     renderDevlogCalendar(result || []);
     statusText.textContent = "Success";
     if (!silent) {
-      noticeBox.textContent = "Devlog refreshed.";
+      noticeBox.textContent = currentDevlogKeyword
+        ? `Devlog filtered by keyword: ${currentDevlogKeyword}`
+        : "Devlog refreshed.";
     }
   } catch (error) {
     statusText.textContent = "Error";
@@ -651,6 +669,24 @@ async function loadDevlogs(options = {}) {
       setControlsDisabled(false);
     }
   }
+}
+
+async function handleSearchDevlogs() {
+  const keyword = devlogSearchInput.value.trim();
+  currentDevlogMonthKey = null;
+  selectedDevlogDateKey = null;
+  await loadDevlogs({ keyword });
+}
+
+async function handleClearDevlogSearch() {
+  if (!devlogSearchInput.value.trim() && !currentDevlogKeyword) {
+    return;
+  }
+
+  devlogSearchInput.value = "";
+  currentDevlogMonthKey = null;
+  selectedDevlogDateKey = null;
+  await loadDevlogs({ keyword: "" });
 }
 
 async function selectSession(nextSessionId) {
@@ -1041,10 +1077,18 @@ newSessionButton.addEventListener("click", handleNewSession);
 refreshSessionButton.addEventListener("click", loadSessionList);
 refreshDevlogButton.addEventListener("click", () => loadDevlogs());
 saveDevlogButton.addEventListener("click", handleCreateDevlog);
+searchDevlogButton.addEventListener("click", handleSearchDevlogs);
+clearDevlogSearchButton.addEventListener("click", handleClearDevlogSearch);
 openDevlogButton.addEventListener("click", openDevlogDrawer);
 closeDevlogButton.addEventListener("click", closeDevlogDrawer);
 devlogDrawerBackdrop.addEventListener("click", closeDevlogDrawer);
 logoutButton.addEventListener("click", handleLogout);
+devlogSearchInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    handleSearchDevlogs();
+  }
+});
 
 sessionList.addEventListener("click", (event) => {
   const deleteButton = event.target.closest(".session-delete");
